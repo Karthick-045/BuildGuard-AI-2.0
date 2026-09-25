@@ -26,6 +26,7 @@ import { UploadPanel } from '../components/project/UploadPanel';
 import { SafetyGraph } from '../components/graph/SafetyGraph';
 import { FindingsPanel } from '../components/findings/FindingsPanel';
 import { WhatIfPanel } from '../components/simulation/WhatIfPanel';
+import { AgentChatbot } from '../components/chat/AgentChatbot';
 import { projectApi } from '../services/api';
 import { 
   Project, 
@@ -335,6 +336,9 @@ export const ProjectWorkspace: React.FC = () => {
           onSimulationUpdated={handleSimulationUpdated}
           currentResult={simulationResult}
         />
+
+        {/* 5. Grounded AI Agent Chatbot */}
+        {id && <AgentChatbot projectId={id} projectName={project?.name} />}
       </PageContainer>
     </div>
   );

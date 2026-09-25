@@ -115,3 +115,33 @@ export interface SimulationResponse {
   articulation_points?: string[];
   simulation_run_id?: number;
 }
+
+export interface ChatMessage {
+  id: string;
+  sender: 'user' | 'agent';
+  content: string;
+  timestamp: string;
+  provider_used?: string;
+  isGrounded?: boolean;
+}
+
+export interface ChatResponse {
+  success: boolean;
+  reply: string;
+  provider_used: string;
+  has_api_key: boolean;
+  context_summary?: {
+    project_id: number;
+    total_elements: number;
+    total_findings: number;
+    articulation_points_count: number;
+  };
+}
+
+export interface ChatStatus {
+  gemini_configured: boolean;
+  openai_configured: boolean;
+  supported_providers: string[];
+  default_provider: string;
+}
+

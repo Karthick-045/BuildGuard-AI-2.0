@@ -4,6 +4,7 @@ from app.schemas.graph import GraphNodeSchema, GraphEdgeSchema, SafetyGraphRespo
 from app.schemas.finding import FindingCreate, FindingResponse
 from app.schemas.simulation import SimulationRequest, SimulationResponse, ResetSimulationResponse
 from app.schemas.ai_analysis import AiAnalysisResponse
+from app.schemas.chat import ChatMessageRequest, ChatMessageResponse, ChatStatusResponse
 
 __all__ = [
     "ProjectCreate",
@@ -21,5 +22,8 @@ __all__ = [
     "SimulationRequest",
     "SimulationResponse",
     "ResetSimulationResponse",
-    "AiAnalysisResponse"
+    "AiAnalysisResponse",
+    "ChatMessageRequest",
+    "ChatMessageResponse",
+    "ChatStatusResponse",
 ]

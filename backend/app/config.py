@@ -19,6 +19,10 @@ class Settings(BaseSettings):
         "DATABASE_URL", 
         "mysql+pymysql://root@localhost:3306/buildguard"
     )
+
+    # AI Agent Chatbot API Keys
+    GEMINI_API_KEY: str = os.getenv("GEMINI_API_KEY", "")
+    OPENAI_API_KEY: str = os.getenv("OPENAI_API_KEY", "")
     
     # Uploads
     UPLOAD_DIR: str = os.getenv("UPLOAD_DIR", "uploads")

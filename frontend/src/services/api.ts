@@ -6,7 +6,9 @@ import {
   SafetyGraph,
   Finding,
   SimulationRequest,
-  SimulationResponse
+  SimulationResponse,
+  ChatResponse,
+  ChatStatus
 } from "../types";
 
 export const api = axios.create({
@@ -95,6 +97,29 @@ export const projectApi = {
   // Reset simulation to baseline
   resetSimulation: async (id: number | string): Promise<{ success: boolean; message: string }> => {
     const response = await api.post(`/projects/${id}/reset-simulation`);
+    return response.data;
+  },
+
+  // Chat with AI Agent grounded in project backend data
+  chatWithAgent: async (
+    projectId: number | string,
+    message: string,
+    apiKey?: string,
+    provider: string = "gemini",
+    history: { role: string; content: string }[] = []
+  ): Promise<ChatResponse> => {
+    const response = await api.post<ChatResponse>(`/projects/${projectId}/chat`, {
+      message,
+      api_key: apiKey || undefined,
+      provider,
+      history,
+    });
+    return response.data;
+  },
+
+  // Get server-side chat status & configuration
+  getChatStatus: async (): Promise<ChatStatus> => {
+    const response = await api.get<ChatStatus>("/chat/status");
     return response.data;
   },
 };
