@@ -9,14 +9,19 @@ import {
   FileText, 
   Image as ImageIcon,
   CheckCircle2,
-  AlertCircle
+  AlertCircle,
+  Mic
 } from 'lucide-react';
 import { Header } from '../components/layout/Header';
 import { PageContainer } from '../components/layout/PageContainer';
+import { VoiceBuildingModal } from '../components/voice/VoiceBuildingModal';
 import { projectApi } from '../services/api';
 
 export const NewProject: React.FC = () => {
   const navigate = useNavigate();
+
+  // Voice Building modal state
+  const [showVoiceModal, setShowVoiceModal] = useState(false);
 
   // Form states
   const [name, setName] = useState('');
@@ -106,9 +111,40 @@ export const NewProject: React.FC = () => {
       <Header
         title="Create New Project"
         subtitle="Initialize architectural model, blueprint ingestion, and site verification"
+        actions={
+          <button
+            type="button"
+            onClick={() => setShowVoiceModal(true)}
+            className="flex items-center gap-2 px-3.5 py-1.5 rounded-lg bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white text-xs font-semibold shadow-md shadow-indigo-600/30 transition-all active:scale-95 border border-indigo-400/30"
+          >
+            <Mic className="w-4 h-4 animate-pulse text-indigo-200" />
+            <span>Build by Voice</span>
+          </button>
+        }
       />
 
       <PageContainer className="max-w-4xl">
+        {/* Voice Building Promotion Banner */}
+        <div className="mb-6 p-4 rounded-xl bg-gradient-to-r from-indigo-950/60 via-purple-950/40 to-slate-900 border border-indigo-500/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-indigo-600/30 border border-indigo-400/40 flex items-center justify-center shrink-0">
+              <Mic className="w-5 h-5 text-indigo-300 animate-pulse" />
+            </div>
+            <div>
+              <h4 className="text-sm font-semibold text-white">Have a layout in mind? Speak to Build!</h4>
+              <p className="text-xs text-slate-300">Dictate your floor plan, rooms, corridors, and exits. BuildGuard NLP will generate the digital twin and safety graph instantly.</p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => setShowVoiceModal(true)}
+            className="px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold shrink-0 transition-all shadow-md shadow-indigo-600/25 flex items-center gap-1.5 active:scale-95"
+          >
+            <Mic className="w-3.5 h-3.5" />
+            <span>Describe by Voice</span>
+          </button>
+        </div>
+
         <form onSubmit={handleSubmit} className="space-y-6">
           {error && (
             <div className="p-4 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs flex items-center gap-2">
@@ -309,6 +345,12 @@ export const NewProject: React.FC = () => {
           </div>
         </form>
       </PageContainer>
+
+      {/* Voice Building Modal */}
+      <VoiceBuildingModal
+        isOpen={showVoiceModal}
+        onClose={() => setShowVoiceModal(false)}
+      />
     </div>
   );
 };

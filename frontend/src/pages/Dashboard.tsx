@@ -8,12 +8,14 @@ import {
   Plus, 
   RefreshCw,
   Sparkles,
-  ArrowRight
+  ArrowRight,
+  Mic
 } from 'lucide-react';
 import { Header } from '../components/layout/Header';
 import { PageContainer } from '../components/layout/PageContainer';
 import { StatCard } from '../components/dashboard/StatCard';
 import { ProjectCard } from '../components/dashboard/ProjectCard';
+import { VoiceBuildingModal } from '../components/voice/VoiceBuildingModal';
 import { projectApi } from '../services/api';
 import { Project, ProjectListResponse } from '../types';
 
@@ -21,6 +23,7 @@ export const Dashboard: React.FC = () => {
   const [data, setData] = useState<ProjectListResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [seedingDemo, setSeedingDemo] = useState(false);
+  const [showVoiceModal, setShowVoiceModal] = useState(false);
 
   const fetchProjects = async () => {
     setLoading(true);
@@ -73,6 +76,14 @@ export const Dashboard: React.FC = () => {
               title="Refresh"
             >
               <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+            </button>
+            <button
+              onClick={() => setShowVoiceModal(true)}
+              className="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500 text-white text-xs font-bold shadow-md shadow-red-950/40 transition-all active:scale-95"
+              title="Build Safety Graph by speaking building layout"
+            >
+              <Mic className="w-3.5 h-3.5" />
+              <span>Build by Voice</span>
             </button>
             <Link
               to="/projects/new"
@@ -181,6 +192,12 @@ export const Dashboard: React.FC = () => {
           )}
         </div>
       </PageContainer>
+
+      <VoiceBuildingModal
+        isOpen={showVoiceModal}
+        onClose={() => setShowVoiceModal(false)}
+        onProjectCreated={() => fetchProjects()}
+      />
     </div>
   );
 };

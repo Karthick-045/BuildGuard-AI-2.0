@@ -16,10 +16,16 @@ import {
   Check,
   Zap,
   Minimize2,
-  Maximize2
+  Maximize2,
+  Mic,
+  MicOff,
+  Volume2,
+  VolumeX
 } from 'lucide-react';
 import { projectApi } from '../../services/api';
 import { ChatMessage, ChatResponse, ChatStatus } from '../../types';
+import { useSpeechRecognition } from '../../hooks/useSpeechRecognition';
+import { useSpeechSynthesis } from '../../hooks/useSpeechSynthesis';
 
 interface AgentChatbotProps {
   projectId: number;
@@ -30,6 +36,22 @@ export const AgentChatbot: React.FC<AgentChatbotProps> = ({ projectId, projectNa
   const [isOpen, setIsOpen] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
+
+  // Speech Recognition & Synthesis hooks
+  const {
+    isListening,
+    transcript: speechTranscript,
+    isSupported: speechRecSupported,
+    startListening,
+    stopListening,
+    resetTranscript: resetSpeechTranscript
+  } = useSpeechRecognition();
+
+  const {
+    isSpeaking,
+    speak: speakText,
+    stop: stopSpeech
+  } = useSpeechSynthesis();
 
   // API Key & Provider Settings (Persisted in localStorage)
   const [provider, setProvider] = useState<'gemini' | 'openai'>('gemini');
@@ -44,6 +66,13 @@ export const AgentChatbot: React.FC<AgentChatbotProps> = ({ projectId, projectNa
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  // Sync speech recognition into input field
+  useEffect(() => {
+    if (isListening && speechTranscript) {
+      setInputMessage(speechTranscript);
+    }
+  }, [speechTranscript, isListening]);
 
   // Load saved keys & server status
   useEffect(() => {
@@ -465,17 +494,31 @@ export const AgentChatbot: React.FC<AgentChatbotProps> = ({ projectId, projectNa
                     </div>
 
                     {m.sender === 'agent' && (
-                      <button
-                        onClick={() => handleCopy(m.content, m.id)}
-                        className="opacity-0 group-hover:opacity-100 transition-opacity p-0.5 hover:text-white"
-                        title="Copy Response"
-                      >
-                        {copiedId === m.id ? (
-                          <Check className="w-3 h-3 text-emerald-400" />
-                        ) : (
-                          <Copy className="w-3 h-3 text-slate-400" />
-                        )}
-                      </button>
+                      <div className="flex items-center gap-1.5">
+                        <button
+                          type="button"
+                          onClick={() => isSpeaking ? stopSpeech() : speakText(m.content)}
+                          className="p-0.5 text-slate-400 hover:text-cyan-300 transition-colors"
+                          title={isSpeaking ? "Stop Voice Response" : "🔊 Listen to Voice Response (TTS)"}
+                        >
+                          {isSpeaking ? (
+                            <VolumeX className="w-3.5 h-3.5 text-red-400 animate-pulse" />
+                          ) : (
+                            <Volume2 className="w-3.5 h-3.5 text-slate-400 hover:text-cyan-300" />
+                          )}
+                        </button>
+                        <button
+                          onClick={() => handleCopy(m.content, m.id)}
+                          className="opacity-0 group-hover:opacity-100 transition-opacity p-0.5 hover:text-white"
+                          title="Copy Response"
+                        >
+                          {copiedId === m.id ? (
+                            <Check className="w-3 h-3 text-emerald-400" />
+                          ) : (
+                            <Copy className="w-3 h-3 text-slate-400" />
+                          )}
+                        </button>
+                      </div>
                     )}
                   </div>
                 </div>
@@ -509,6 +552,7 @@ export const AgentChatbot: React.FC<AgentChatbotProps> = ({ projectId, projectNa
             <form
               onSubmit={(e) => {
                 e.preventDefault();
+                if (isListening) stopListening();
                 handleSendMessage();
               }}
               className="flex items-center gap-2"
@@ -518,10 +562,32 @@ export const AgentChatbot: React.FC<AgentChatbotProps> = ({ projectId, projectNa
                 type="text"
                 value={inputMessage}
                 onChange={(e) => setInputMessage(e.target.value)}
-                placeholder="Ask about articulation points, what-if simulations, egress checks..."
+                placeholder={isListening ? "🎙️ Listening to your voice... Speak now" : "Ask about egress paths, sensors, what-if simulations..."}
                 disabled={isLoading}
-                className="flex-1 bg-slate-900 border border-slate-700/80 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-sky-500 transition-colors disabled:opacity-60"
+                className={`flex-1 bg-slate-900 border rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none transition-colors disabled:opacity-60 ${
+                  isListening ? 'border-red-500 ring-1 ring-red-500/50 bg-red-950/20' : 'border-slate-700/80 focus:border-sky-500'
+                }`}
               />
+              <button
+                type="button"
+                onClick={() => {
+                  if (isListening) {
+                    stopListening();
+                  } else {
+                    resetSpeechTranscript();
+                    startListening();
+                  }
+                }}
+                disabled={isLoading}
+                className={`p-2.5 rounded-xl border transition-all ${
+                  isListening
+                    ? 'bg-red-500/20 border-red-500 text-red-400 animate-pulse ring-2 ring-red-500/30'
+                    : 'bg-slate-800 border-slate-700 text-slate-400 hover:text-white hover:border-slate-500'
+                }`}
+                title={isListening ? "Listening... Click to stop" : "Speak to AI Copilot (Voice Input)"}
+              >
+                {isListening ? <MicOff className="w-4 h-4 text-red-400" /> : <Mic className="w-4 h-4" />}
+              </button>
               <button
                 type="submit"
                 disabled={!inputMessage.trim() || isLoading}

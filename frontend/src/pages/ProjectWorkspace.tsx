@@ -110,9 +110,11 @@ export const ProjectWorkspace: React.FC = () => {
     }
   };
 
-  // Handle Simulation Update from WhatIfPanel
-  const handleSimulationUpdated = async (result: SimulationResponse | null) => {
-    setSimulationResult(result);
+  // Handle Simulation Update from WhatIfPanel or Quick Graph Actions
+  const handleSimulationUpdated = async (result?: SimulationResponse | null) => {
+    if (result !== undefined) {
+      setSimulationResult(result);
+    }
     // Refresh graph to reflect blocked nodes and affected rooms
     try {
       const updatedGraph = await projectApi.getGraph(id);
@@ -317,6 +319,8 @@ export const ProjectWorkspace: React.FC = () => {
               >
                 <SafetyGraph
                   graphData={graphData}
+                  projectId={id}
+                  onRefreshGraph={() => handleSimulationUpdated()}
                   onNodeClick={(nodeId) => {
                     // Quick simulation trigger by clicking on an exit or corridor
                     if (nodeId.startsWith('exit_') || nodeId.startsWith('corridor_') || nodeId.startsWith('stair_')) {

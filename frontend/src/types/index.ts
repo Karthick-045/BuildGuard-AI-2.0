@@ -50,6 +50,11 @@ export interface GraphNodeData {
   is_blocked?: boolean;
   is_affected?: boolean;
   is_bottleneck?: boolean;
+  is_hazard?: boolean;
+  hazard_type?: string | null;
+  sensor_reading?: string | null;
+  sensor_id?: string | null;
+  hazard_message?: string | null;
   position?: { x: number; y: number };
 }
 
@@ -59,6 +64,7 @@ export interface GraphEdgeData {
   relationship: string;
   animated?: boolean;
   is_affected?: boolean;
+  is_egress?: boolean;
 }
 
 export interface ConnectivityStatus {
@@ -75,6 +81,9 @@ export interface SafetyGraph {
   connectivity?: ConnectivityStatus[];
   articulation_points?: string[];
   all_rooms_safe?: boolean;
+  dynamic_safety_state?: 'SAFE' | 'WARNING' | 'HAZARD' | 'BLOCKED' | 'REQUIRES_REVIEW' | string;
+  active_hazard_count?: number;
+  isolated_rooms?: string[];
 }
 
 export type SeverityType = 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW';
@@ -193,6 +202,26 @@ export interface DynamicRouteResponse {
     validation_status: string;
   };
   ai_guidance: string;
+}
+
+export interface VoiceBuildResponse {
+  success: boolean;
+  project_id: number;
+  project_name: string;
+  building_type: string;
+  floors: number;
+  elements_created: number;
+  sensors_seeded: number;
+  parsed_layout: any;
+  graph: SafetyGraph;
+  message: string;
+}
+
+export interface VoiceCommandResponse {
+  action: string;
+  command: string;
+  spoken_summary: string;
+  data: any;
 }
 
 

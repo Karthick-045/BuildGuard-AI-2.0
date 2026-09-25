@@ -7,6 +7,7 @@ from app.routes.simulation_routes import router as simulation_router
 from app.routes.chat_routes import router as chat_router
 from app.routes.sensor_routes import router as sensor_router
 from app.routes.route_routes import router as route_router
+from app.routes.voice_routes import router as voice_router
 
 __all__ = [
     "project_router",
@@ -18,4 +19,6 @@ __all__ = [
     "chat_router",
     "sensor_router",
     "route_router",
+    "voice_router",
 ]
+

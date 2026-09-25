@@ -157,7 +157,7 @@ class ChatService:
             {
                 "id": a.id,
                 "asset_type": a.asset_type,
-                "filename": a.filename,
+                "filename": getattr(a, "file_name", getattr(a, "filename", "")),
                 "quality_score": a.quality_score,
                 "quality_status": a.quality_status
             }
@@ -539,8 +539,8 @@ GROUND TRUTH BACKEND DATA FOR CURRENT PROJECT:
 
         if provider_norm == "gemini":
             try:
-                # Call Google Gemini API
-                url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={api_key}"
+                # Call Google Gemini API (gemini-3.5-flash-lite / gemini-3.8-flash)
+                url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash-lite:generateContent?key={api_key}"
                 
                 # Format contents with conversation history
                 contents = []
@@ -579,7 +579,7 @@ GROUND TRUTH BACKEND DATA FOR CURRENT PROJECT:
                             return {
                                 "success": True,
                                 "reply": reply_text,
-                                "provider_used": "Gemini 2.5 Flash",
+                                "provider_used": "Gemini 3.5 Flash Lite",
                                 "has_api_key": True,
                                 "context_summary": {
                                     "project_id": project_id,
@@ -588,9 +588,9 @@ GROUND TRUTH BACKEND DATA FOR CURRENT PROJECT:
                                     "articulation_points_count": len(context["graph"]["articulation_points"])
                                 }
                             }
-                    elif resp.status_code == 404:
-                        # Fallback to gemini-1.5-flash if 2.5 is not found
-                        fallback_url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={api_key}"
+                    elif resp.status_code in [404, 400]:
+                        # Fallback to gemini-3.8-flash
+                        fallback_url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key={api_key}"
                         resp2 = await client.post(fallback_url, json=payload)
                         if resp2.status_code == 200:
                             data = resp2.json()
@@ -601,7 +601,7 @@ GROUND TRUTH BACKEND DATA FOR CURRENT PROJECT:
                                 return {
                                     "success": True,
                                     "reply": reply_text,
-                                    "provider_used": "Gemini 1.5 Flash",
+                                    "provider_used": "Gemini 3.8 Flash",
                                     "has_api_key": True,
                                     "context_summary": {
                                         "project_id": project_id,

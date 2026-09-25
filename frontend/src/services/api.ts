@@ -11,7 +11,9 @@ import {
   ChatStatus,
   BuildingSensor,
   SensorListResponse,
-  DynamicRouteResponse
+  DynamicRouteResponse,
+  VoiceBuildResponse,
+  VoiceCommandResponse
 } from "../types";
 
 export const api = axios.create({
@@ -159,6 +161,30 @@ export const projectApi = {
     data: { start_room: string; avoid_elements?: string[]; use_sensor_alerts?: boolean }
   ): Promise<DynamicRouteResponse> => {
     const response = await api.post<DynamicRouteResponse>(`/projects/${projectId}/routes/dynamic-find`, data);
+    return response.data;
+  },
+
+  // Build a project and safety graph directly from natural speech input
+  buildProjectFromVoice: async (
+    speechTranscript: string,
+    buildingName?: string
+  ): Promise<VoiceBuildResponse> => {
+    const response = await api.post<VoiceBuildResponse>("/voice/build-project", {
+      speech_transcript: speechTranscript,
+      building_name: buildingName,
+    });
+    return response.data;
+  },
+
+  // Execute spoken command on a project
+  executeVoiceCommand: async (
+    projectId: number | string,
+    command: string
+  ): Promise<VoiceCommandResponse> => {
+    const response = await api.post<VoiceCommandResponse>("/voice/command", {
+      project_id: projectId,
+      command,
+    });
     return response.data;
   },
 };

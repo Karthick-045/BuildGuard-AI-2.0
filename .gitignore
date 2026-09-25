@@ -27,6 +27,9 @@ ENV/
 env/
 *.db
 *.sqlite3
+.env
+backend/.env
+frontend/.env
 
 # Node / Frontend
 node_modules/
