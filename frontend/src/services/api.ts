@@ -10,7 +10,8 @@ import {
   ChatResponse,
   ChatStatus,
   BuildingSensor,
-  SensorListResponse
+  SensorListResponse,
+  DynamicRouteResponse
 } from "../types";
 
 export const api = axios.create({
@@ -143,6 +144,15 @@ export const projectApi = {
   // Reset sensors telemetry to baseline
   resetSensors: async (projectId: number | string): Promise<{ success: boolean; message: string }> => {
     const response = await api.post(`/projects/${projectId}/sensors/reset`);
+    return response.data;
+  },
+
+  // Calculate dynamic evacuation route with sensor validation
+  findDynamicRoute: async (
+    projectId: number | string,
+    data: { start_room: string; avoid_elements?: string[]; use_sensor_alerts?: boolean }
+  ): Promise<DynamicRouteResponse> => {
+    const response = await api.post<DynamicRouteResponse>(`/projects/${projectId}/routes/dynamic-find`, data);
     return response.data;
   },
 };

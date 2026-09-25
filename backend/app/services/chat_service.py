@@ -27,6 +27,7 @@ from app.models.asset import Asset
 from app.models.ai_models import BuildingContextModel
 from app.core.safety_graph import safety_graph_engine
 from app.services.sensor_service import sensor_service
+from app.services.route_service import route_finder_service
 
 logger = logging.getLogger("buildguard.chat")
 
@@ -260,6 +261,40 @@ class ChatService:
                     f"- **Remaining Articulation Points**: `{', '.join(new_ap) if new_ap else 'None'}`\n"
                     f"- Alternate paths through secondary corridors or fire stairs remain active."
                 )
+
+        # 1.8. Dynamic Evacuation Route Finder Query
+        if any(w in q for w in ["route", "escape path", "evacuate", "evacuation route", "path from", "how to escape", "dynamic route"]):
+            start_room = "Room A"
+            for r in ["room a", "room b", "room c", "room d", "room e", "room f", "room g", "room h"]:
+                if r in q:
+                    start_room = r.title()
+                    break
+            
+            route_res = route_finder_service.find_dynamic_route(
+                project_id=context["project"]["id"],
+                start_room=start_room,
+                use_sensor_alerts=True
+            )
+            
+            res = f"### 🏃 Dynamic Evacuation Route Finder — {route_res['start_room']}\n\n"
+            res += f"- **Target Exit**: **{route_res['target_exit']}**\n"
+            res += f"- **Route Status**: `{route_res['route_status']}`\n"
+            res += f"- **Total Transit Steps**: {route_res['total_steps']}\n"
+            if route_res['hazards_avoided']:
+                res += f"- **Sensor Hazards Avoided**: `{', '.join(route_res['hazards_avoided'])}`\n"
+            
+            res += "\n**Step-by-Step Evacuation Path:**\n"
+            steps = route_res.get("route_steps", [])
+            if steps:
+                path_str = " ➔ ".join(f"`{st['label']}`" for st in steps)
+                res += f"{path_str}\n\n"
+                for i, st in enumerate(steps, 1):
+                    res += f"{i}. **{st['label']}** ({st['type']})\n"
+            else:
+                res += "⚠️ No viable route found due to surrounding obstructions.\n"
+            
+            res += f"\n> **AI Safety Guidance**: {route_res['ai_guidance']}"
+            return res
 
         # 2. IoT Building Safety Sensors & Telemetry
         if any(w in q for w in ["sensor", "telemetry", "smoke", "temperature", "heat", "alarm", "fire", "co2", "occupancy", "iot"]):

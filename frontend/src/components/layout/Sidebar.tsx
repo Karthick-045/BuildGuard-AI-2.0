@@ -8,7 +8,9 @@ import {
   GitBranch, 
   Activity,
   CheckCircle2,
-  Server
+  Server,
+  Compass,
+  Radio
 } from 'lucide-react';
 import { api } from '../../services/api';
 
@@ -95,6 +97,22 @@ export const Sidebar: React.FC = () => {
           <div>
             <div className="font-semibold text-slate-300">Bottleneck Audit</div>
             <div className="text-[10px] text-slate-400">Articulation Points</div>
+          </div>
+        </div>
+
+        <div className="flex items-center space-x-3 px-3.5 py-2 rounded-lg text-xs text-slate-400 bg-slate-800/40 border border-slate-800">
+          <Compass className="w-4 h-4 text-sky-400" />
+          <div>
+            <div className="font-semibold text-slate-300">Dynamic Route Finder</div>
+            <div className="text-[10px] text-slate-400">Sensor-Guided Egress</div>
+          </div>
+        </div>
+
+        <div className="flex items-center space-x-3 px-3.5 py-2 rounded-lg text-xs text-slate-400 bg-slate-800/40 border border-slate-800">
+          <Radio className="w-4 h-4 text-rose-400" />
+          <div>
+            <div className="font-semibold text-slate-300">IoT Safety Sensors</div>
+            <div className="text-[10px] text-slate-400">Smoke, Temp & Door Contact</div>
           </div>
         </div>
       </nav>

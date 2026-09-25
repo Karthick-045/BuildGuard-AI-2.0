@@ -168,4 +168,32 @@ export interface SensorListResponse {
   sensors: BuildingSensor[];
 }
 
+export interface RouteStep {
+  id: string;
+  label: string;
+  type: string;
+  position?: { x: number; y: number };
+}
+
+export interface DynamicRouteResponse {
+  success: boolean;
+  project_id: number;
+  start_room: string;
+  start_node_id?: string;
+  target_exit: string;
+  target_exit_id?: string;
+  route_status: string;
+  total_steps: number;
+  route_steps: RouteStep[];
+  hazards_avoided: string[];
+  sensor_validation: {
+    sensors_checked: boolean;
+    active_hazards_count: number;
+    hazards_detected: any[];
+    validation_status: string;
+  };
+  ai_guidance: string;
+}
+
+
 

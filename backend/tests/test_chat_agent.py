@@ -143,7 +143,28 @@ def test_chat_agent():
     assert reset_res.status_code == 200
     print("Sensor reset response:", reset_res.json())
 
-    print("\n✅ ALL CHAT AGENT & SENSOR TELEMETRY TESTS PASSED!")
+    print("\n--- 13. Testing Dynamic Route Finder API ---")
+    route_res = client.post(f"/api/projects/{project_id}/routes/dynamic-find", json={
+        "start_room": "Room A",
+        "use_sensor_alerts": True
+    })
+    assert route_res.status_code == 200, f"Route find failed: {route_res.text}"
+    r_data = route_res.json()
+    print(f"Dynamic Route from {r_data['start_room']} to {r_data['target_exit']}: {r_data['total_steps']} steps")
+    assert r_data["success"] is True
+    assert len(r_data["route_steps"]) > 0
+
+    print("\n--- 14. Testing Chatbot Dynamic Route Query ---")
+    chat_route = client.post(f"/api/projects/{project_id}/chat", json={
+        "message": "Find dynamic evacuation route from Room A"
+    })
+    assert chat_route.status_code == 200
+    chat_route_data = chat_route.json()
+    print("Chatbot Dynamic Route snippet:\n", chat_route_data["reply"][:300], "...")
+    assert "Dynamic Evacuation Route" in chat_route_data["reply"]
+    assert "Exit B" in chat_route_data["reply"] or "exit" in chat_route_data["reply"].lower()
+
+    print("\n✅ ALL CHAT AGENT, SENSOR & DYNAMIC ROUTE FINDER TESTS PASSED!")
 
 if __name__ == "__main__":
     test_chat_agent()
