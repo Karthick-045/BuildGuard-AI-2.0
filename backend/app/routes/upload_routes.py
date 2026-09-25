@@ -5,6 +5,7 @@ from app.database import get_db
 from app.config import settings
 from app.models.project import Project
 from app.models.asset import Asset
+from app.models.ai_models import EvidenceQualityModel
 from app.utils.file_handler import save_uploaded_file
 
 router = APIRouter(prefix="/projects", tags=["Uploads"])
@@ -16,7 +17,7 @@ async def upload_blueprint(
     db: Session = Depends(get_db)
 ):
     """
-    Uploads a building blueprint image for a project.
+    Uploads a building blueprint image for a project and runs evidence quality analysis.
     """
     project = db.query(Project).filter(Project.id == project_id).first()
     if not project:
@@ -28,6 +29,9 @@ async def upload_blueprint(
     # Save file
     file_name, file_path = save_uploaded_file(file, settings.BLUEPRINT_UPLOAD_DIR)
 
+    # Run Evidence Quality check
+    quality = EvidenceQualityModel.analyze_image(file_path)
+
     # Remove previous blueprint asset if exists
     db.query(Asset).filter(
         Asset.project_id == project_id,
@@ -38,7 +42,15 @@ async def upload_blueprint(
         project_id=project_id,
         asset_type="BLUEPRINT",
         file_name=file_name,
-        file_path=file_path
+        file_path=file_path,
+        resolution_width=quality.get("resolution_width"),
+        resolution_height=quality.get("resolution_height"),
+        brightness=quality.get("brightness"),
+        contrast=quality.get("contrast"),
+        sharpness=quality.get("sharpness"),
+        quality_status=quality.get("quality_status"),
+        quality_score=quality.get("quality_score"),
+        quality_details=quality.get("details")
     )
     db.add(asset)
     db.commit()
@@ -49,7 +61,8 @@ async def upload_blueprint(
         "message": "Blueprint uploaded successfully.",
         "asset_id": asset.id,
         "file_name": file_name,
-        "url": f"/uploads/blueprints/{file_name}"
+        "url": f"/uploads/blueprints/{file_name}",
+        "evidence_quality": quality
     }
 
 @router.post("/{project_id}/photos")
@@ -59,7 +72,7 @@ async def upload_site_photos(
     db: Session = Depends(get_db)
 ):
     """
-    Uploads one or more site verification photos for a project.
+    Uploads one or more site verification photos for a project and evaluates evidence quality.
     """
     project = db.query(Project).filter(Project.id == project_id).first()
     if not project:
@@ -71,16 +84,27 @@ async def upload_site_photos(
     uploaded_assets = []
     for file in files:
         file_name, file_path = save_uploaded_file(file, settings.SITE_PHOTO_UPLOAD_DIR)
+        quality = EvidenceQualityModel.analyze_image(file_path)
+
         asset = Asset(
             project_id=project_id,
             asset_type="SITE_PHOTO",
             file_name=file_name,
-            file_path=file_path
+            file_path=file_path,
+            resolution_width=quality.get("resolution_width"),
+            resolution_height=quality.get("resolution_height"),
+            brightness=quality.get("brightness"),
+            contrast=quality.get("contrast"),
+            sharpness=quality.get("sharpness"),
+            quality_status=quality.get("quality_status"),
+            quality_score=quality.get("quality_score"),
+            quality_details=quality.get("details")
         )
         db.add(asset)
         uploaded_assets.append({
             "file_name": file_name,
-            "url": f"/uploads/site_photos/{file_name}"
+            "url": f"/uploads/site_photos/{file_name}",
+            "evidence_quality": quality
         })
 
     db.commit()

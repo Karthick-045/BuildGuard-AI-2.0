@@ -1,5 +1,5 @@
 import React from 'react';
-import { AlertCircle, AlertTriangle, CheckCircle, Info, ShieldAlert } from 'lucide-react';
+import { AlertCircle, AlertTriangle, CheckCircle, Info, ShieldAlert, Sparkles, Wrench } from 'lucide-react';
 import { Finding } from '../../types';
 
 interface FindingCardProps {
@@ -54,10 +54,15 @@ export const FindingCard: React.FC<FindingCardProps> = ({ finding }) => {
         <div className="flex items-start space-x-3">
           <div className="mt-0.5">{getIcon()}</div>
           <div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
               <span className={`text-[10px] font-bold px-2 py-0.5 rounded border uppercase ${getSeverityBadge()}`}>
                 {finding.severity}
               </span>
+              {finding.rule_id && (
+                <span className="text-[10px] font-mono font-semibold px-2 py-0.5 rounded bg-slate-900 text-cyan-400 border border-cyan-800/50">
+                  {finding.rule_id}
+                </span>
+              )}
               <h4 className="font-semibold text-white text-sm">
                 {finding.element}
               </h4>
@@ -77,7 +82,33 @@ export const FindingCard: React.FC<FindingCardProps> = ({ finding }) => {
         {finding.description}
       </p>
 
-      {/* Confidence Breakdown Bars */}
+      {/* AI Explanation & Reasoning */}
+      {finding.ai_explanation && (
+        <div className="bg-sky-950/30 border border-sky-800/40 rounded-lg p-3 space-y-1">
+          <div className="flex items-center gap-1.5 text-sky-400 text-[11px] font-semibold">
+            <Sparkles className="w-3.5 h-3.5" />
+            <span>AI Safety Reasoning</span>
+          </div>
+          <p className="text-[11px] text-sky-200/90 leading-relaxed">
+            {finding.ai_explanation}
+          </p>
+        </div>
+      )}
+
+      {/* Remediation Advice */}
+      {finding.remediation && (
+        <div className="bg-amber-950/20 border border-amber-800/30 rounded-lg p-3 space-y-1">
+          <div className="flex items-center gap-1.5 text-amber-400 text-[11px] font-semibold">
+            <Wrench className="w-3.5 h-3.5" />
+            <span>Recommended Mitigation</span>
+          </div>
+          <p className="text-[11px] text-amber-200/90 leading-relaxed">
+            {finding.remediation}
+          </p>
+        </div>
+      )}
+
+      {/* Confidence Breakdown Bars (Slide 7) */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-1 border-t border-slate-700/50 text-[11px]">
         <div>
           <div className="flex justify-between text-slate-400 mb-1">

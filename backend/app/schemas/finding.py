@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Optional, List
+from typing import Optional, List, Any
 from pydantic import BaseModel, ConfigDict
 
 class FindingCreate(BaseModel):
@@ -8,6 +8,10 @@ class FindingCreate(BaseModel):
     severity: str
     status: str = "REQUIRES_REVIEW"
     description: str
+    rule_id: Optional[str] = None
+    ai_explanation: Optional[str] = None
+    remediation: Optional[str] = None
+    affected_elements: Optional[List[str]] = None
     detection_confidence: float = 0.95
     measurement_confidence: float = 0.90
     rule_applicability: float = 0.85
@@ -16,11 +20,15 @@ class FindingCreate(BaseModel):
 class FindingResponse(BaseModel):
     id: int
     project_id: int
+    rule_id: Optional[str] = None
     element: str
     finding_type: str
     severity: str
     status: str
     description: str
+    ai_explanation: Optional[str] = None
+    remediation: Optional[str] = None
+    affected_elements: Optional[List[str]] = None
     detection_confidence: float
     measurement_confidence: float
     rule_applicability: float

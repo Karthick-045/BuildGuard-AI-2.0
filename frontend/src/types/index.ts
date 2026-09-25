@@ -88,6 +88,10 @@ export interface Finding {
   severity: SeverityType;
   status: StatusType;
   description: string;
+  rule_id?: string;
+  ai_explanation?: string;
+  remediation?: string;
+  affected_elements?: string[];
   detection_confidence: number;
   measurement_confidence: number;
   rule_applicability: number;

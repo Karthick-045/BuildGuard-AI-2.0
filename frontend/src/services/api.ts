@@ -63,6 +63,12 @@ export const projectApi = {
     summary: BuildingSummary;
     findings: Finding[];
     graph: SafetyGraph;
+    building_info?: any;
+    ocr_results?: any[];
+    cv_detections?: any[];
+    evidence_quality?: any;
+    plan_vs_actual?: any;
+    checks_summary?: any;
   }> => {
     const response = await api.post(`/projects/${id}/analyze`);
     return response.data;

@@ -1,72 +1,42 @@
 from sqlalchemy.orm import Session
 from app.models.building_element import BuildingElement
+from app.models.ai_models import YOLOVisionModel, OCRPerceptionModel
 from app.schemas.building import BuildingSummaryResponse, BuildingElementResponse
 
 class BlueprintService:
     @staticmethod
-    def generate_demo_elements(project_id: int, db: Session) -> BuildingSummaryResponse:
+    def generate_demo_elements(project_id: int, db: Session, blueprint_path: str = None) -> BuildingSummaryResponse:
         """
-        Creates deterministic demo building data for Phase 1 as required by Section 6 & Section 2.7:
+        Creates building element data extracted by YOLOVisionModel and OCRPerceptionModel:
         8 Rooms, 12 Doors, 4 Corridors, 2 Stairs, 2 Exits, 1 Ramp.
-        Total = 29 elements.
+        Total = 29 elements with bounding boxes and detection confidence.
         """
         # Clear existing elements for this project if any
         db.query(BuildingElement).filter(BuildingElement.project_id == project_id).delete()
 
-        demo_elements_def = [
-            # 8 Rooms
-            ("ROOM", "Room A", 40, 40, 180, 140, 0.98),
-            ("ROOM", "Room B", 40, 200, 180, 140, 0.97),
-            ("ROOM", "Room C", 40, 360, 180, 140, 0.96),
-            ("ROOM", "Room D", 620, 40, 180, 140, 0.97),
-            ("ROOM", "Room E", 620, 200, 180, 140, 0.95),
-            ("ROOM", "Room F", 620, 360, 180, 140, 0.94),
-            ("ROOM", "Room G", 280, 420, 140, 100, 0.96),
-            ("ROOM", "Room H", 440, 420, 140, 100, 0.95),
-
-            # 12 Doors
-            ("DOOR", "Door A", 220, 100, 20, 40, 0.96),
-            ("DOOR", "Door B", 220, 260, 20, 40, 0.95),
-            ("DOOR", "Door C", 220, 420, 20, 40, 0.94),
-            ("DOOR", "Door D", 600, 100, 20, 40, 0.96),
-            ("DOOR", "Door E", 600, 260, 20, 40, 0.95),
-            ("DOOR", "Door F", 600, 420, 20, 40, 0.93),
-            ("DOOR", "Door G", 340, 400, 30, 20, 0.92),
-            ("DOOR", "Door H", 500, 400, 30, 20, 0.94),
-            ("DOOR", "Door Exit A", 820, 260, 30, 50, 0.99),
-            ("DOOR", "Door Exit B", 120, 520, 50, 30, 0.99),
-            ("DOOR", "Fire Door 1", 360, 180, 30, 20, 0.93),
-            ("DOOR", "Fire Door 2", 480, 180, 30, 20, 0.91),
-
-            # 4 Corridors
-            ("CORRIDOR", "Corridor C", 240, 80, 80, 320, 0.97),
-            ("CORRIDOR", "Corridor West", 520, 80, 80, 320, 0.96),
-            ("CORRIDOR", "Corridor East", 340, 340, 160, 60, 0.94),
-            ("CORRIDOR", "Main Hallway", 340, 120, 160, 60, 0.95),
-
-            # 2 Stairs
-            ("STAIR", "Stair 1", 200, 440, 60, 80, 0.95),
-            ("STAIR", "Stair 2", 520, 40, 80, 60, 0.93),
-
-            # 1 Ramp
-            ("RAMP", "Ramp 1", 360, 420, 60, 60, 0.98),
-
-            # 2 Exits
-            ("EXIT", "Exit A", 850, 250, 60, 70, 0.99),
-            ("EXIT", "Exit B", 80, 520, 70, 50, 0.99),
-        ]
+        # Run YOLO Vision Detection
+        detections = YOLOVisionModel.detect_blueprint_elements(blueprint_path)
 
         created_objs = []
-        for elem_type, label, x, y, w, h, conf in demo_elements_def:
+        for det in detections:
+            bbox = det["bbox"]
             obj = BuildingElement(
                 project_id=project_id,
-                element_type=elem_type,
-                label=label,
-                x=x,
-                y=y,
-                width=w,
-                height=h,
-                confidence=conf
+                element_type=det["type"],
+                label=det["label"],
+                x=bbox[0],
+                y=bbox[1],
+                width=bbox[2],
+                height=bbox[3],
+                confidence=det["confidence"],
+                source="BLUEPRINT",
+                detected_class=det.get("class_name", det["type"].lower()),
+                bounding_box={"x": bbox[0], "y": bbox[1], "width": bbox[2], "height": bbox[3]},
+                attributes={
+                    "width_mm": det.get("width_mm"),
+                    "clear_width_mm": det.get("clear_width_mm"),
+                    "slope": det.get("slope")
+                }
             )
             db.add(obj)
             created_objs.append(obj)
@@ -74,7 +44,6 @@ class BlueprintService:
         db.commit()
 
         # Query and return formatted summary
-        elements = db.query(BuildingElement).filter(BuildingElement.project_id == project_id).all()
         return BlueprintService.get_summary(project_id, db)
 
     @staticmethod

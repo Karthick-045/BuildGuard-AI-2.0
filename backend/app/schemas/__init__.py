@@ -3,6 +3,7 @@ from app.schemas.building import BuildingElementCreate, BuildingElementResponse,
 from app.schemas.graph import GraphNodeSchema, GraphEdgeSchema, SafetyGraphResponse, ConnectivityStatus
 from app.schemas.finding import FindingCreate, FindingResponse
 from app.schemas.simulation import SimulationRequest, SimulationResponse, ResetSimulationResponse
+from app.schemas.ai_analysis import AiAnalysisResponse
 
 __all__ = [
     "ProjectCreate",
@@ -20,4 +21,5 @@ __all__ = [
     "SimulationRequest",
     "SimulationResponse",
     "ResetSimulationResponse",
+    "AiAnalysisResponse"
 ]

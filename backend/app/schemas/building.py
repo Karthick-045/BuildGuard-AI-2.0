@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Optional, List
+from typing import Optional, List, Dict, Any
 from pydantic import BaseModel, ConfigDict
 
 class BuildingElementBase(BaseModel):
@@ -10,6 +10,10 @@ class BuildingElementBase(BaseModel):
     width: float = 0.0
     height: float = 0.0
     confidence: float = 1.0
+    source: Optional[str] = "BLUEPRINT"
+    detected_class: Optional[str] = None
+    bounding_box: Optional[Dict[str, Any]] = None
+    attributes: Optional[Dict[str, Any]] = None
 
 class BuildingElementCreate(BuildingElementBase):
     pass

@@ -5,6 +5,7 @@ from app.services.simulation_service import SimulationService, simulation_servic
 from app.services.plan_compare_service import PlanCompareService, plan_compare_service
 from app.services.evidence_service import EvidenceService, evidence_service
 from app.services.report_service import ReportService, report_service
+from app.services.vision_service import VisionService, vision_service
 
 __all__ = [
     "BlueprintService",
@@ -21,4 +22,6 @@ __all__ = [
     "evidence_service",
     "ReportService",
     "report_service",
+    "VisionService",
+    "vision_service"
 ]

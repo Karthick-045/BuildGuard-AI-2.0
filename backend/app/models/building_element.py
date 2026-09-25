@@ -1,5 +1,5 @@
 from datetime import datetime
-from sqlalchemy import Column, Integer, String, Float, DateTime, ForeignKey
+from sqlalchemy import Column, Integer, String, Float, JSON, DateTime, ForeignKey
 from sqlalchemy.orm import relationship
 from app.database import Base
 
@@ -15,6 +15,13 @@ class BuildingElement(Base):
     width = Column(Float, default=0.0)
     height = Column(Float, default=0.0)
     confidence = Column(Float, default=1.0)
+    
+    # AI Detection Metadata
+    source = Column(String(50), default="BLUEPRINT")  # BLUEPRINT, SITE_PHOTO
+    detected_class = Column(String(50), nullable=True)
+    bounding_box = Column(JSON, nullable=True)
+    attributes = Column(JSON, nullable=True)
+
     created_at = Column(DateTime, default=datetime.utcnow)
 
     # Relationship

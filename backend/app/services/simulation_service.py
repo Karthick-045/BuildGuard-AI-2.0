@@ -1,6 +1,7 @@
 from sqlalchemy.orm import Session
 from app.models.simulation import SimulationRun
 from app.core.safety_graph import safety_graph_engine
+from app.models.ai_models import ExplainableSafetyModel
 from app.schemas.simulation import SimulationRequest, SimulationResponse, ResetSimulationResponse
 
 class SimulationService:
@@ -12,8 +13,9 @@ class SimulationService:
         2. Removes target element (e.g. exit_b, corridor_c, stair_1)
         3. Recalculates connectivity for all rooms
         4. Detects affected rooms
-        5. Logs run to simulation_runs table
-        6. Returns response matching Section 12 spec
+        5. Generates Explainable AI reasoning via ExplainableSafetyModel
+        6. Logs run to simulation_runs table
+        7. Returns response
         """
         target = request.get_target()
         action = request.action.upper()
@@ -30,6 +32,15 @@ class SimulationService:
                 affected_rooms=[],
                 message=sim_result.get("message", f"Target {target} not recognized.")
             )
+
+        # Generate Explainable AI reasoning
+        explanation = ExplainableSafetyModel.generate_simulation_explanation(
+            target_element=sim_result["target"],
+            affected_rooms=sim_result["affected_rooms"],
+            lost_connectivity=sim_result["lost_connectivity"]
+        )
+        sim_result["ai_explanation"] = explanation
+        sim_result["message"] = explanation
 
         # Save record in simulation_runs
         sim_run = SimulationRun(
@@ -51,7 +62,7 @@ class SimulationService:
             action=action,
             lost_connectivity=sim_result["lost_connectivity"],
             affected_rooms=sim_result["affected_rooms"],
-            message=sim_result["message"],
+            message=explanation,
             articulation_points=sim_result.get("articulation_points", []),
             simulation_run_id=sim_run.id
         )

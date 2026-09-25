@@ -19,3 +19,5 @@ class Project(Base):
     graph_edges = relationship("GraphEdge", back_populates="project", cascade="all, delete-orphan")
     findings = relationship("Finding", back_populates="project", cascade="all, delete-orphan")
     simulation_runs = relationship("SimulationRun", back_populates="project", cascade="all, delete-orphan")
+    plan_comparisons = relationship("PlanComparison", back_populates="project", cascade="all, delete-orphan")
+    ai_analysis_runs = relationship("AiAnalysisRun", back_populates="project", cascade="all, delete-orphan")
