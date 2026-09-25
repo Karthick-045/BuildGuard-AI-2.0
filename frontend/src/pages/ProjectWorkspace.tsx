@@ -181,54 +181,54 @@ export const ProjectWorkspace: React.FC = () => {
         />
 
         {/* AI Models Inspection Status Bar */}
-        <div className="bg-slate-800/80 border border-slate-700/60 rounded-xl p-4 shadow-sm">
-          <div className="flex items-center justify-between pb-3 border-b border-slate-700/50 mb-3 flex-wrap gap-2">
+        <div className="bg-slate-900/70 border border-slate-800 rounded-xl p-4 shadow-sm">
+          <div className="flex items-center justify-between pb-3 border-b border-slate-800/80 mb-3 flex-wrap gap-2">
             <div className="flex items-center space-x-2">
               <Sparkles className="w-4 h-4 text-sky-400" />
               <h3 className="font-semibold text-white text-xs uppercase tracking-wider">
-                Active AI Models & Multimodal Egress Pipeline
+                Multimodal Egress Pipeline & Verification Models
               </h3>
             </div>
-            <span className="text-[10px] font-mono font-semibold px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
-              8 Egress Safety Checks Online
+            <span className="text-[10px] font-mono font-medium px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+              8 Life Safety Checks Active
             </span>
           </div>
 
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
-            <div className="bg-slate-900/60 border border-slate-800 p-2.5 rounded-lg">
-              <div className="flex items-center gap-1.5 text-slate-400 font-semibold mb-1">
-                <ScanLine className="w-3.5 h-3.5 text-cyan-400" />
+            <div className="bg-slate-950 border border-slate-800/80 p-2.5 rounded-lg">
+              <div className="flex items-center gap-1.5 text-slate-400 font-medium mb-1">
+                <ScanLine className="w-3.5 h-3.5 text-slate-400" />
                 <span>OCR Perception</span>
               </div>
-              <p className="text-white font-bold">13 Blueprint Tokens</p>
-              <p className="text-[10px] text-slate-400 mt-0.5">Rooms & Dimensions Extracted</p>
+              <p className="text-white font-bold tracking-tight">13 Blueprint Tokens</p>
+              <p className="text-[10px] text-slate-500 mt-0.5">Rooms & Dimensions Extracted</p>
             </div>
 
-            <div className="bg-slate-900/60 border border-slate-800 p-2.5 rounded-lg">
-              <div className="flex items-center gap-1.5 text-slate-400 font-semibold mb-1">
-                <CheckCheck className="w-3.5 h-3.5 text-indigo-400" />
-                <span>YOLO / CV Vision</span>
+            <div className="bg-slate-950 border border-slate-800/80 p-2.5 rounded-lg">
+              <div className="flex items-center gap-1.5 text-slate-400 font-medium mb-1">
+                <CheckCheck className="w-3.5 h-3.5 text-slate-400" />
+                <span>Spatial CV Vision</span>
               </div>
-              <p className="text-white font-bold">Clear Widths Verified</p>
-              <p className="text-[10px] text-slate-400 mt-0.5">Doors, Stairs & Signs Inspected</p>
+              <p className="text-white font-bold tracking-tight">Clear Widths Verified</p>
+              <p className="text-[10px] text-slate-500 mt-0.5">Doors, Stairs & Exits Inspected</p>
             </div>
 
-            <div className="bg-slate-900/60 border border-slate-800 p-2.5 rounded-lg">
-              <div className="flex items-center gap-1.5 text-slate-400 font-semibold mb-1">
-                <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
+            <div className="bg-slate-950 border border-slate-800/80 p-2.5 rounded-lg">
+              <div className="flex items-center gap-1.5 text-slate-400 font-medium mb-1">
+                <ShieldCheck className="w-3.5 h-3.5 text-slate-400" />
                 <span>Plan vs Actual</span>
               </div>
-              <p className="text-white font-bold">98.5% Compliance</p>
-              <p className="text-[10px] text-slate-400 mt-0.5">5 Elements Matched on Site</p>
+              <p className="text-white font-bold tracking-tight">98.5% Compliance</p>
+              <p className="text-[10px] text-slate-500 mt-0.5">5 Elements Matched on Site</p>
             </div>
 
-            <div className="bg-slate-900/60 border border-slate-800 p-2.5 rounded-lg">
-              <div className="flex items-center gap-1.5 text-slate-400 font-semibold mb-1">
-                <Flame className="w-3.5 h-3.5 text-amber-400" />
+            <div className="bg-slate-950 border border-slate-800/80 p-2.5 rounded-lg">
+              <div className="flex items-center gap-1.5 text-slate-400 font-medium mb-1">
+                <Flame className="w-3.5 h-3.5 text-slate-400" />
                 <span>Safety Audit</span>
               </div>
-              <p className="text-white font-bold">7 Pass • 1 Warning</p>
-              <p className="text-[10px] text-slate-400 mt-0.5">Articulation Points Flagged</p>
+              <p className="text-white font-bold tracking-tight">7 Pass • 1 Warning</p>
+              <p className="text-[10px] text-slate-500 mt-0.5">Articulation Points Flagged</p>
             </div>
           </div>
         </div>
@@ -237,19 +237,19 @@ export const ProjectWorkspace: React.FC = () => {
         <div className="space-y-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2">
-              <Compass className="w-5 h-5 text-sky-400" />
-              <h3 className="font-semibold text-white text-base">
+              <Compass className="w-4 h-4 text-sky-400" />
+              <h3 className="font-semibold text-white text-sm">
                 Spatial Analysis & Safety Graph Reasoning
               </h3>
             </div>
 
             {/* View Mode Switcher */}
-            <div className="inline-flex rounded-lg bg-slate-800/80 p-1 border border-slate-700/60 text-xs">
+            <div className="inline-flex rounded-lg bg-slate-900 p-0.5 border border-slate-800 text-xs">
               <button
                 onClick={() => setViewMode('split')}
-                className={`px-3 py-1 rounded-md font-semibold transition-all ${
+                className={`px-3 py-1 rounded-md font-medium transition-all ${
                   viewMode === 'split'
-                    ? 'bg-sky-500 text-white shadow-sm'
+                    ? 'bg-slate-800 text-white shadow-sm'
                     : 'text-slate-400 hover:text-slate-200'
                 }`}
               >
@@ -257,9 +257,9 @@ export const ProjectWorkspace: React.FC = () => {
               </button>
               <button
                 onClick={() => setViewMode('blueprint')}
-                className={`px-3 py-1 rounded-md font-semibold transition-all ${
+                className={`px-3 py-1 rounded-md font-medium transition-all ${
                   viewMode === 'blueprint'
-                    ? 'bg-sky-500 text-white shadow-sm'
+                    ? 'bg-slate-800 text-white shadow-sm'
                     : 'text-slate-400 hover:text-slate-200'
                 }`}
               >
@@ -267,9 +267,9 @@ export const ProjectWorkspace: React.FC = () => {
               </button>
               <button
                 onClick={() => setViewMode('graph')}
-                className={`px-3 py-1 rounded-md font-semibold transition-all ${
+                className={`px-3 py-1 rounded-md font-medium transition-all ${
                   viewMode === 'graph'
-                    ? 'bg-sky-500 text-white shadow-sm'
+                    ? 'bg-slate-800 text-white shadow-sm'
                     : 'text-slate-400 hover:text-slate-200'
                 }`}
               >
@@ -284,17 +284,17 @@ export const ProjectWorkspace: React.FC = () => {
               <div
                 className={`${
                   viewMode === 'split' ? 'lg:col-span-5' : 'lg:col-span-12'
-                } bg-slate-800/80 border border-slate-700/60 rounded-xl p-4 shadow-sm flex flex-col justify-between`}
+                } bg-slate-900/70 border border-slate-800 rounded-xl p-4 shadow-sm flex flex-col justify-between`}
               >
-                <div className="flex items-center justify-between pb-3 border-b border-slate-700/50 mb-3">
-                  <span className="text-xs font-bold uppercase tracking-wider text-slate-300 flex items-center gap-1.5">
+                <div className="flex items-center justify-between pb-3 border-b border-slate-800/80 mb-3">
+                  <span className="text-xs font-semibold uppercase tracking-wider text-slate-300 flex items-center gap-1.5">
                     <FileText className="w-3.5 h-3.5 text-sky-400" />
                     Architectural Blueprint & Egress Layout
                   </span>
-                  <span className="text-[10px] text-slate-400">Level 1 Plan</span>
+                  <span className="text-[10px] font-mono text-slate-400">Scale: 1/4" = 1'-0"</span>
                 </div>
 
-                <div className="w-full h-[470px] bg-slate-950 rounded-lg overflow-hidden border border-slate-800 flex items-center justify-center p-2 relative group">
+                <div className="w-full h-[470px] bg-slate-950 rounded-lg overflow-hidden border border-slate-800/80 flex items-center justify-center p-2 relative group">
                   <img
                     src={project?.blueprint_path || '/demo/blueprint.svg'}
                     alt="Floor Plan Blueprint"
@@ -303,8 +303,8 @@ export const ProjectWorkspace: React.FC = () => {
                       (e.currentTarget as HTMLImageElement).src = '/demo/blueprint.svg';
                     }}
                   />
-                  <div className="absolute bottom-2 right-2 bg-slate-900/80 backdrop-blur-sm px-2 py-1 rounded border border-slate-700 text-[10px] text-slate-300">
-                    Baseline CAD Model
+                  <div className="absolute bottom-2 right-2 bg-slate-900/90 backdrop-blur-sm px-2 py-0.5 rounded border border-slate-800 text-[10px] font-mono text-slate-300">
+                    Vector CAD Model
                   </div>
                 </div>
               </div>

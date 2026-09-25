@@ -92,41 +92,38 @@ export const SensorAlertPopup: React.FC<SensorAlertPopupProps> = ({
       : null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4 animate-in fade-in duration-200">
-      <div className="bg-slate-900 border-2 border-rose-500 rounded-2xl max-w-xl w-full shadow-2xl shadow-rose-950/80 ring-8 ring-rose-500/20 overflow-hidden flex flex-col">
-        {/* Flashing Alert Header */}
-        <div className="bg-gradient-to-r from-rose-700 via-red-600 to-rose-700 px-6 py-4 flex items-center justify-between text-white border-b border-rose-500">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-white/20 rounded-xl backdrop-blur-sm animate-bounce">
-              <ShieldAlert className="w-6 h-6 text-white" />
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-sm p-4 animate-in fade-in duration-150">
+      <div className="bg-slate-950 border border-slate-800 border-t-2 border-t-rose-500 rounded-xl max-w-lg w-full shadow-2xl overflow-hidden flex flex-col">
+        {/* Supervisory Alert Header */}
+        <div className="bg-slate-900/90 px-5 py-3.5 flex items-center justify-between border-b border-slate-800">
+          <div className="flex items-center gap-2.5">
+            <div className="p-1.5 bg-rose-500/10 border border-rose-500/20 rounded-md text-rose-400">
+              <ShieldAlert className="w-4 h-4" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <span className="text-xs font-black tracking-widest uppercase bg-rose-950 px-2 py-0.5 rounded text-rose-300">
-                  CRITICAL SENSOR EVENT
+                <span className="text-[10px] font-mono font-medium uppercase tracking-wider text-rose-400">
+                  Critical Sensor Event
                 </span>
-                <span className="flex h-2 w-2 relative">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-white"></span>
-                </span>
+                <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
               </div>
-              <h2 className="text-base font-bold tracking-tight text-white mt-0.5">
-                Safety Threshold Breach Detected
+              <h2 className="text-sm font-semibold tracking-tight text-white mt-0.5">
+                Life Safety Threshold Breach
               </h2>
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5">
             <button
               onClick={() => setIsMuted(!isMuted)}
               title={isMuted ? 'Unmute alert tone' : 'Mute alert tone'}
-              className="p-1.5 rounded-lg bg-black/20 hover:bg-black/30 text-rose-100 transition-colors"
+              className="p-1 rounded-md text-slate-400 hover:text-slate-200 hover:bg-slate-800 transition-colors"
             >
               {isMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
             </button>
             <button
               onClick={onClose}
-              className="p-1.5 rounded-lg bg-black/20 hover:bg-black/40 text-rose-100 hover:text-white transition-colors"
+              className="p-1 rounded-md text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
             >
               <X className="w-4 h-4" />
             </button>
@@ -134,103 +131,103 @@ export const SensorAlertPopup: React.FC<SensorAlertPopupProps> = ({
         </div>
 
         {/* Modal Body */}
-        <div className="p-6 space-y-5">
+        <div className="p-5 space-y-4">
           {/* Main Sensor Card */}
-          <div className="bg-slate-950/80 border border-rose-500/40 rounded-xl p-4 space-y-3">
+          <div className="bg-slate-900/60 border border-slate-800 rounded-lg p-4 space-y-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                {isSmoke && <Flame className="w-5 h-5 text-rose-500 animate-pulse" />}
-                {isTemp && <Thermometer className="w-5 h-5 text-amber-500 animate-pulse" />}
-                {isDoor && <DoorClosed className="w-5 h-5 text-red-400 animate-pulse" />}
-                {!isSmoke && !isTemp && !isDoor && <Activity className="w-5 h-5 text-rose-500 animate-pulse" />}
-                <span className="font-bold text-white text-sm">
+                {isSmoke && <Flame className="w-4 h-4 text-rose-400" />}
+                {isTemp && <Thermometer className="w-4 h-4 text-amber-400" />}
+                {isDoor && <DoorClosed className="w-4 h-4 text-rose-400" />}
+                {!isSmoke && !isTemp && !isDoor && <Activity className="w-4 h-4 text-rose-400" />}
+                <span className="font-semibold text-white text-xs">
                   {alert.element_label}
                 </span>
               </div>
-              <span className="font-mono text-[11px] text-slate-400 bg-slate-800/90 px-2 py-0.5 rounded border border-slate-700">
+              <span className="font-mono text-[10px] text-slate-400 bg-slate-950 px-2 py-0.5 rounded border border-slate-800">
                 {alert.sensor_id}
               </span>
             </div>
 
             <div className="text-xs text-slate-300 flex items-center gap-1.5">
-              <Radio className="w-3.5 h-3.5 text-rose-400 shrink-0" />
-              <span>Location: <strong>{alert.location}</strong></span>
+              <Radio className="w-3.5 h-3.5 text-slate-500 shrink-0" />
+              <span>Location: <span className="text-slate-200">{alert.location}</span></span>
             </div>
 
             {/* Threshold vs Reading Comparison */}
-            <div className="grid grid-cols-2 gap-3 pt-2 border-t border-slate-800">
-              <div className="bg-rose-950/40 border border-rose-500/50 p-3 rounded-lg text-center">
-                <span className="text-[10px] font-semibold text-rose-300 uppercase tracking-wider block mb-0.5">
-                  Current Sensor Telemetry
+            <div className="grid grid-cols-2 gap-2.5 pt-2 border-t border-slate-800/80">
+              <div className="bg-rose-500/5 border border-rose-500/20 p-2.5 rounded-lg text-center">
+                <span className="text-[10px] font-mono font-medium text-rose-400 uppercase tracking-wider block mb-0.5">
+                  Current Telemetry
                 </span>
-                <span className="text-xl font-black font-mono text-rose-400">
+                <span className="text-lg font-bold font-mono text-rose-300">
                   {isDoor
-                    ? (alert.current_value === 0.0 ? 'BLOCKED / OPEN' : 'NORMAL')
+                    ? (alert.current_value === 0.0 ? 'BLOCKED / OPEN' : 'LATCHED')
                     : `${alert.current_value} ${alert.unit}`}
                 </span>
                 {percentOver !== null && (
-                  <span className="block text-[10px] font-bold text-rose-300 mt-0.5">
-                    ▲ +{percentOver}% Above Safe Limit
+                  <span className="block text-[10px] font-mono text-rose-400 mt-0.5">
+                    +{percentOver}% above limit
                   </span>
                 )}
               </div>
 
-              <div className="bg-slate-900 border border-slate-800 p-3 rounded-lg text-center">
-                <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block mb-0.5">
-                  Safety Threshold Limit
+              <div className="bg-slate-950 border border-slate-800 p-2.5 rounded-lg text-center">
+                <span className="text-[10px] font-mono font-medium text-slate-400 uppercase tracking-wider block mb-0.5">
+                  Threshold Limit
                 </span>
-                <span className="text-xl font-black font-mono text-slate-200">
+                <span className="text-lg font-bold font-mono text-slate-200">
                   {isDoor ? '0.0 (Must Latch)' : `${alert.threshold} ${alert.unit}`}
                 </span>
-                <span className="block text-[10px] text-slate-400 mt-0.5">
-                  NFPA Life Safety Standard
+                <span className="block text-[10px] text-slate-500 mt-0.5">
+                  NFPA Standard
                 </span>
               </div>
             </div>
 
             {/* Specific Alert Message */}
             {alert.alert_message && (
-              <div className="bg-rose-500/10 border border-rose-500/30 rounded-lg p-2.5 text-xs text-rose-200 font-medium leading-relaxed">
-                ⚠️ {alert.alert_message}
+              <div className="bg-rose-500/10 border border-rose-500/20 rounded-md p-2.5 text-xs text-rose-200 leading-relaxed font-mono">
+                {alert.alert_message}
               </div>
             )}
           </div>
 
           {/* Safety Graph Impact Notification */}
-          <div className="bg-slate-950/40 border border-slate-800 rounded-xl p-3.5 flex items-start gap-3">
-            <div className="p-2 rounded-lg bg-sky-500/10 border border-sky-500/20 text-sky-400 shrink-0 mt-0.5">
-              <Activity className="w-4 h-4" />
+          <div className="bg-slate-900/40 border border-slate-800 rounded-lg p-3 flex items-start gap-2.5">
+            <div className="p-1.5 rounded bg-slate-800 text-sky-400 shrink-0 mt-0.5">
+              <Activity className="w-3.5 h-3.5" />
             </div>
-            <div className="text-xs space-y-1">
-              <p className="font-bold text-white">Dynamic Safety Graph Recalculated</p>
-              <p className="text-slate-400 leading-relaxed">
-                BuildGuard AI has flagged <strong>{alert.element_label}</strong> as an active hazard. Egress paths passing through this zone are automatically marked compromised to prevent evacuee routing into hazardous corridors.
+            <div className="text-xs space-y-0.5">
+              <p className="font-medium text-white">Dynamic Safety Graph Recalculated</p>
+              <p className="text-slate-400 leading-relaxed text-[11px]">
+                BuildGuard AI flagged <strong>{alert.element_label}</strong> as an active hazard. Topological paths traversing this zone are re-routed to prevent routing through compromised egress corridors.
               </p>
             </div>
           </div>
         </div>
 
         {/* Footer Actions */}
-        <div className="px-6 py-4 bg-slate-950 border-t border-slate-800 flex items-center justify-between gap-3 flex-wrap">
+        <div className="px-5 py-3 bg-slate-950 border-t border-slate-800 flex items-center justify-between gap-2.5 flex-wrap">
           {onResetSensors && (
             <button
               onClick={() => {
                 onResetSensors();
                 onClose();
               }}
-              className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold border border-slate-700 transition-colors"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-slate-300 text-xs font-medium border border-slate-800 transition-colors"
             >
               <RotateCcw className="w-3.5 h-3.5" />
-              <span>Reset to Safe Baseline</span>
+              <span>Reset Baseline</span>
             </button>
           )}
 
           <div className="flex items-center gap-2 ml-auto">
             <button
               onClick={onClose}
-              className="px-4 py-2 rounded-xl text-xs font-medium text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+              className="px-3 py-1.5 rounded-lg text-xs font-medium text-slate-400 hover:text-white hover:bg-slate-900 transition-colors"
             >
-              Acknowledge & Dismiss
+              Acknowledge & Close
             </button>
 
             {onRecalculateRoute && (
@@ -239,10 +236,10 @@ export const SensorAlertPopup: React.FC<SensorAlertPopupProps> = ({
                   onRecalculateRoute();
                   onClose();
                 }}
-                className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white shadow-lg shadow-emerald-950/50 transition-all active:scale-95"
+                className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-medium bg-sky-600 hover:bg-sky-500 text-white shadow-sm transition-all"
               >
                 <Navigation className="w-3.5 h-3.5" />
-                <span>Recalculate Egress Route</span>
+                <span>Recalculate Route</span>
                 <ArrowRight className="w-3.5 h-3.5" />
               </button>
             )}

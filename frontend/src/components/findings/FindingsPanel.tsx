@@ -23,11 +23,11 @@ export const FindingsPanel: React.FC<FindingsPanelProps> = ({ findings }) => {
   return (
     <div className="space-y-4">
       {/* Header & Filter Controls */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-800/80 border border-slate-700/60 rounded-xl p-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-900/70 border border-slate-800 rounded-xl p-4">
         <div>
-          <h3 className="font-semibold text-white text-base flex items-center gap-2">
-            <AlertTriangle className="w-5 h-5 text-amber-400" />
-            Safety & Egress Findings ({findings.length})
+          <h3 className="font-semibold text-white text-sm flex items-center gap-2">
+            <AlertTriangle className="w-4 h-4 text-amber-400" />
+            Safety & Egress Audit Findings ({findings.length})
           </h3>
           <p className="text-xs text-slate-400 mt-0.5">
             Deterministic graph audit results for bottlenecks, egress dead-ends, and articulation points.
@@ -36,12 +36,12 @@ export const FindingsPanel: React.FC<FindingsPanelProps> = ({ findings }) => {
 
         <div className="flex items-center gap-2 text-xs">
           <Filter className="w-3.5 h-3.5 text-slate-400" />
-          <div className="inline-flex rounded-lg bg-slate-900/60 p-1 border border-slate-700/60">
+          <div className="inline-flex rounded-lg bg-slate-950 p-0.5 border border-slate-800">
             <button
               onClick={() => setFilter('ALL')}
-              className={`px-2.5 py-1 rounded-md font-semibold transition-all ${
+              className={`px-2.5 py-1 rounded-md text-xs font-medium transition-all ${
                 filter === 'ALL'
-                  ? 'bg-sky-500 text-white shadow-sm'
+                  ? 'bg-slate-800 text-white shadow-sm'
                   : 'text-slate-400 hover:text-slate-200'
               }`}
             >
@@ -49,9 +49,9 @@ export const FindingsPanel: React.FC<FindingsPanelProps> = ({ findings }) => {
             </button>
             <button
               onClick={() => setFilter('CRITICAL_HIGH')}
-              className={`px-2.5 py-1 rounded-md font-semibold transition-all ${
+              className={`px-2.5 py-1 rounded-md text-xs font-medium transition-all ${
                 filter === 'CRITICAL_HIGH'
-                  ? 'bg-rose-500 text-white shadow-sm'
+                  ? 'bg-rose-500/20 text-rose-300 border border-rose-500/30'
                   : 'text-slate-400 hover:text-slate-200'
               }`}
             >
@@ -59,9 +59,9 @@ export const FindingsPanel: React.FC<FindingsPanelProps> = ({ findings }) => {
             </button>
             <button
               onClick={() => setFilter('PASS')}
-              className={`px-2.5 py-1 rounded-md font-semibold transition-all ${
+              className={`px-2.5 py-1 rounded-md text-xs font-medium transition-all ${
                 filter === 'PASS'
-                  ? 'bg-emerald-500 text-white shadow-sm'
+                  ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
                   : 'text-slate-400 hover:text-slate-200'
               }`}
             >

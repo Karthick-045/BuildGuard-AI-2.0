@@ -12,7 +12,11 @@ import {
   Sparkles,
   Zap,
   MapPin,
-  Compass
+  Compass,
+  GitFork,
+  ArrowUpRight,
+  Accessibility,
+  LogOut
 } from 'lucide-react';
 import { projectApi } from '../../services/api';
 import { DynamicRouteResponse } from '../../types';
@@ -145,15 +149,15 @@ export const DynamicRouteFinder: React.FC<DynamicRouteFinderProps> = ({ projectI
     }
   };
 
-  const getStepIcon = (type: string) => {
+  const renderStepIcon = (type: string) => {
     switch (type.toUpperCase()) {
-      case 'ROOM': return '🚪';
-      case 'DOOR': return '🚪';
-      case 'CORRIDOR': return '🛣️';
-      case 'STAIR': return '🪜';
-      case 'RAMP': return '♿';
-      case 'EXIT': return '🟢';
-      default: return '📍';
+      case 'ROOM': return <DoorClosed className="w-3.5 h-3.5 text-slate-400" />;
+      case 'DOOR': return <DoorClosed className="w-3.5 h-3.5 text-sky-400" />;
+      case 'CORRIDOR': return <GitFork className="w-3.5 h-3.5 text-indigo-400" />;
+      case 'STAIR': return <ArrowUpRight className="w-3.5 h-3.5 text-amber-400" />;
+      case 'RAMP': return <Accessibility className="w-3.5 h-3.5 text-teal-400" />;
+      case 'EXIT': return <LogOut className="w-3.5 h-3.5 text-emerald-400" />;
+      default: return <MapPin className="w-3.5 h-3.5 text-slate-400" />;
     }
   };
 
@@ -161,29 +165,32 @@ export const DynamicRouteFinder: React.FC<DynamicRouteFinderProps> = ({ projectI
   const isBlocked = routeResult?.route_status === 'NO_SAFE_ROUTE';
 
   return (
-    <div className="bg-slate-800/80 border border-slate-700/60 rounded-xl p-4 shadow-sm mb-6">
+    <div className="bg-slate-900/70 border border-slate-800 rounded-xl p-4 shadow-sm mb-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-slate-700/60 gap-3">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-slate-800/80 gap-3">
         <div className="flex items-center gap-2.5">
-          <div className="p-2 bg-sky-500/20 rounded-lg text-sky-400 border border-sky-500/30">
-            <Compass className="w-5 h-5" />
+          <div className="p-2 bg-slate-800 border border-slate-700 rounded-lg text-slate-300">
+            <Compass className="w-4 h-4 text-sky-400" />
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h3 className="text-sm font-bold text-white tracking-wide">
+              <h3 className="text-sm font-semibold text-white tracking-tight">
                 Sensor Validation & Dynamic Route Finder
               </h3>
-              <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider border ${
+              <span className={`text-[10px] px-2 py-0.5 rounded font-mono font-medium uppercase tracking-wider border flex items-center gap-1.5 ${
                 isBlocked
-                  ? 'bg-rose-500/20 text-rose-400 border-rose-500/40 animate-pulse'
+                  ? 'bg-rose-500/10 text-rose-400 border-rose-500/30'
                   : isRerouted
-                  ? 'bg-amber-500/20 text-amber-400 border-amber-500/40 animate-pulse'
-                  : 'bg-emerald-500/20 text-emerald-400 border-emerald-500/40'
+                  ? 'bg-amber-500/10 text-amber-400 border-amber-500/30'
+                  : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
               }`}>
-                {isBlocked ? '🚨 Path Compromised' : isRerouted ? '⚠️ Hazard Rerouted' : '✅ Optimal Route Safe'}
+                <span className={`w-1.5 h-1.5 rounded-full ${
+                  isBlocked ? 'bg-rose-500' : isRerouted ? 'bg-amber-400' : 'bg-emerald-400'
+                }`} />
+                <span>{isBlocked ? 'Path Compromised' : isRerouted ? 'Hazard Rerouted' : 'Optimal Route Safe'}</span>
               </span>
             </div>
-            <p className="text-[11px] text-slate-400">
+            <p className="text-[11px] text-slate-400 mt-0.5">
               Validates real-time IoT sensor telemetry and computes dynamically rerouted egress corridors
             </p>
           </div>
@@ -194,41 +201,41 @@ export const DynamicRouteFinder: React.FC<DynamicRouteFinderProps> = ({ projectI
           <button
             onClick={handleSimulateCorridorSmoke}
             disabled={scenarioLoading}
-            className="flex items-center gap-1.5 px-2.5 py-1.5 bg-rose-600/20 hover:bg-rose-600/30 border border-rose-500/40 text-rose-300 rounded-lg text-xs font-medium transition-colors disabled:opacity-50"
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-200 rounded-lg text-xs font-medium transition-colors disabled:opacity-50"
             title="Simulate smoke in Corridor C and test rerouting"
           >
-            <Flame className="w-3.5 h-3.5" />
-            Smoke in Corridor C
+            <Flame className="w-3.5 h-3.5 text-rose-400" />
+            <span>Smoke in Corridor C</span>
           </button>
 
           <button
             onClick={handleSimulateExitBBlock}
             disabled={scenarioLoading}
-            className="flex items-center gap-1.5 px-2.5 py-1.5 bg-amber-600/20 hover:bg-amber-600/30 border border-amber-500/40 text-amber-300 rounded-lg text-xs font-medium transition-colors disabled:opacity-50"
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-200 rounded-lg text-xs font-medium transition-colors disabled:opacity-50"
             title="Simulate blockage of Exit B"
           >
-            <DoorClosed className="w-3.5 h-3.5" />
-            Block Exit B
+            <DoorClosed className="w-3.5 h-3.5 text-amber-400" />
+            <span>Block Exit B</span>
           </button>
 
           <button
             onClick={handleRestore}
             disabled={scenarioLoading}
-            className="flex items-center gap-1 px-2.5 py-1.5 bg-slate-700/60 hover:bg-slate-700 border border-slate-600 text-slate-300 rounded-lg text-xs font-medium transition-colors disabled:opacity-50"
+            className="flex items-center gap-1 px-3 py-1.5 bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-400 hover:text-slate-200 rounded-lg text-xs font-medium transition-colors disabled:opacity-50"
             title="Reset hazards and restore primary optimal routes"
           >
             <RotateCcw className="w-3.5 h-3.5" />
-            Restore
+            <span>Reset Baseline</span>
           </button>
         </div>
       </div>
 
       {/* Origin Selection & Options Bar */}
-      <div className="flex flex-wrap items-center justify-between gap-3 bg-slate-900/60 border border-slate-800 rounded-lg p-3 mt-3.5">
+      <div className="flex flex-wrap items-center justify-between gap-3 bg-slate-950 border border-slate-800 rounded-lg p-2.5 mt-3.5">
         <div className="flex items-center gap-3 flex-wrap">
           <div className="flex items-center gap-2">
-            <label className="text-xs font-semibold text-slate-300 flex items-center gap-1">
-              <MapPin className="w-3.5 h-3.5 text-sky-400" />
+            <label className="text-xs font-medium text-slate-300 flex items-center gap-1">
+              <MapPin className="w-3.5 h-3.5 text-slate-400" />
               Origin Room:
             </label>
             <select
@@ -237,7 +244,7 @@ export const DynamicRouteFinder: React.FC<DynamicRouteFinderProps> = ({ projectI
                 setStartRoom(e.target.value);
                 calculateRoute(e.target.value);
               }}
-              className="bg-slate-800 border border-slate-700 text-white text-xs rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-sky-500"
+              className="bg-slate-900 border border-slate-700/80 text-white text-xs rounded-md px-2.5 py-1 focus:outline-none focus:border-slate-500"
             >
               {rooms.map((r) => (
                 <option key={r} value={r}>{r}</option>
@@ -245,12 +252,12 @@ export const DynamicRouteFinder: React.FC<DynamicRouteFinderProps> = ({ projectI
             </select>
           </div>
 
-          <label className="flex items-center gap-2 text-xs text-slate-300 cursor-pointer select-none">
+          <label className="flex items-center gap-2 text-xs text-slate-400 cursor-pointer select-none">
             <input
               type="checkbox"
               checked={avoidSensors}
               onChange={(e) => setAvoidSensors(e.target.checked)}
-              className="w-3.5 h-3.5 accent-sky-500 rounded bg-slate-800 border-slate-700"
+              className="w-3.5 h-3.5 accent-sky-500 rounded bg-slate-900 border-slate-700"
             />
             <span>Auto-avoid active sensor hazard zones</span>
           </label>
@@ -259,7 +266,7 @@ export const DynamicRouteFinder: React.FC<DynamicRouteFinderProps> = ({ projectI
         <button
           onClick={() => calculateRoute()}
           disabled={loading}
-          className="flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-sky-600 to-indigo-600 hover:from-sky-500 hover:to-indigo-500 text-white rounded-lg text-xs font-semibold shadow-sm transition-all disabled:opacity-50"
+          className="flex items-center gap-1.5 px-3 py-1.5 bg-sky-600 hover:bg-sky-500 text-white rounded-lg text-xs font-medium shadow-sm transition-all disabled:opacity-50"
         >
           <Navigation className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
           <span>{loading ? 'Finding Route...' : 'Find Dynamic Route'}</span>
@@ -270,13 +277,13 @@ export const DynamicRouteFinder: React.FC<DynamicRouteFinderProps> = ({ projectI
       {routeResult && (
         <div className="mt-3.5 space-y-3">
           {/* Breadcrumb Path Banner */}
-          <div className="p-3 bg-slate-950/70 border border-slate-800 rounded-lg">
-            <div className="flex items-center justify-between text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-2">
-              <span>Evacuation Breadcrumb Path</span>
-              <div className="flex items-center gap-3 lowercase">
-                <span>Destination: <strong className="text-emerald-400 capitalize">{routeResult.target_exit}</strong></span>
+          <div className="p-3 bg-slate-950 border border-slate-850 rounded-lg">
+            <div className="flex items-center justify-between text-[11px] font-mono font-medium text-slate-400 uppercase tracking-wider mb-2.5">
+              <span>Evacuation Breadcrumb Sequence</span>
+              <div className="flex items-center gap-3">
+                <span>Destination: <strong className="text-emerald-400">{routeResult.target_exit}</strong></span>
                 <span>•</span>
-                <span>Transit: <strong className="text-sky-300">{routeResult.total_steps} steps</strong></span>
+                <span>Transit: <strong className="text-slate-200">{routeResult.total_steps} steps</strong></span>
               </div>
             </div>
 
@@ -284,22 +291,22 @@ export const DynamicRouteFinder: React.FC<DynamicRouteFinderProps> = ({ projectI
               <div className="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar">
                 {routeResult.route_steps.map((step, idx) => (
                   <React.Fragment key={step.id}>
-                    <div className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-800/90 border border-slate-700/80 rounded-lg shrink-0 shadow-sm">
-                      <span className="text-sm select-none">{getStepIcon(step.type)}</span>
+                    <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-900 border border-slate-800 rounded-lg shrink-0">
+                      {renderStepIcon(step.type)}
                       <div>
-                        <div className="text-xs font-bold text-white whitespace-nowrap">{step.label}</div>
-                        <div className="text-[9px] text-slate-400 uppercase">{step.type}</div>
+                        <div className="text-xs font-semibold text-white whitespace-nowrap">{step.label}</div>
+                        <div className="text-[9px] font-mono text-slate-400 uppercase">{step.type}</div>
                       </div>
                     </div>
                     {idx < routeResult.route_steps.length - 1 && (
-                      <ArrowRight className="w-3.5 h-3.5 text-slate-500 shrink-0" />
+                      <ArrowRight className="w-3.5 h-3.5 text-slate-600 shrink-0" />
                     )}
                   </React.Fragment>
                 ))}
               </div>
             ) : (
-              <div className="p-3 text-center text-xs text-rose-300 bg-rose-500/10 border border-rose-500/30 rounded-lg">
-                🚨 No viable evacuation route found! All accessible paths are currently obstructed or compromised.
+              <div className="p-3 text-center text-xs text-rose-300 bg-rose-500/10 border border-rose-500/20 rounded-lg font-mono">
+                No viable evacuation route found. All accessible paths are currently obstructed or compromised.
               </div>
             )}
           </div>
@@ -307,16 +314,16 @@ export const DynamicRouteFinder: React.FC<DynamicRouteFinderProps> = ({ projectI
           {/* AI Guidance Callout */}
           <div className={`p-3 rounded-lg border text-xs leading-relaxed ${
             isBlocked
-              ? 'bg-rose-950/30 border-rose-500/50 text-rose-200'
+              ? 'bg-rose-950/20 border-rose-500/30 text-rose-200'
               : isRerouted
-              ? 'bg-amber-950/20 border-amber-500/40 text-amber-200'
-              : 'bg-emerald-950/20 border-emerald-500/40 text-emerald-200'
+              ? 'bg-amber-950/20 border-amber-500/30 text-amber-200'
+              : 'bg-slate-950 border-slate-800 text-slate-300'
           }`}>
             <div className="flex items-start gap-2">
-              <Sparkles className="w-4 h-4 shrink-0 mt-0.5" />
+              <Sparkles className="w-3.5 h-3.5 text-sky-400 shrink-0 mt-0.5" />
               <div>
-                <strong className="font-semibold block mb-0.5">
-                  AI Egress Intelligence & Sensor Validation:
+                <strong className="font-semibold block mb-0.5 text-white">
+                  Dynamic Route Guidance:
                 </strong>
                 {routeResult.ai_guidance}
               </div>

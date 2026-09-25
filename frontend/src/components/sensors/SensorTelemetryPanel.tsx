@@ -152,28 +152,29 @@ export const SensorTelemetryPanel: React.FC<SensorTelemetryPanelProps> = ({
   const activeAlerts = sensorsData?.active_alerts_count || 0;
 
   return (
-    <div className="bg-slate-800/80 border border-slate-700/60 rounded-xl p-4 shadow-sm mb-6">
+    <div className="bg-slate-900/70 border border-slate-800 rounded-xl p-4 shadow-sm mb-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-slate-700/60 gap-3">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-slate-800/80 gap-3">
         <div className="flex items-center gap-2.5">
-          <div className="p-2 bg-indigo-500/20 rounded-lg text-indigo-400 border border-indigo-500/30">
-            <Radio className="w-4 h-4 animate-pulse" />
+          <div className="p-2 bg-slate-800 border border-slate-700 rounded-lg text-slate-300">
+            <Radio className="w-4 h-4 text-sky-400" />
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h3 className="text-sm font-bold text-white tracking-wide">
-                IoT Building Safety Sensor Telemetry
+              <h3 className="text-sm font-semibold text-white tracking-tight">
+                IoT Building Life Safety Telemetry
               </h3>
-              <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider border ${
+              <span className={`text-[10px] px-2 py-0.5 rounded font-mono font-medium uppercase tracking-wider border flex items-center gap-1.5 ${
                 activeAlerts > 0
-                  ? 'bg-rose-500/20 text-rose-400 border-rose-500/40 animate-pulse'
-                  : 'bg-emerald-500/20 text-emerald-400 border-emerald-500/40'
+                  ? 'bg-rose-500/10 text-rose-400 border-rose-500/30'
+                  : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
               }`}>
-                {activeAlerts > 0 ? `⚠️ ${activeAlerts} Active Alarm(s)` : '✅ All Sensors Normal'}
+                <span className={`w-1.5 h-1.5 rounded-full ${activeAlerts > 0 ? 'bg-rose-500' : 'bg-emerald-400'}`} />
+                <span>{activeAlerts > 0 ? `${activeAlerts} Active Alarm${activeAlerts > 1 ? 's' : ''}` : 'All Sensors Nominal'}</span>
               </span>
             </div>
-            <p className="text-[11px] text-slate-400">
-              Live environmental, smoke, door contact, and occupancy telemetry connected to AI Chatbot & Safety Graph
+            <p className="text-[11px] text-slate-400 mt-0.5">
+              Environmental, smoke, door contact, and occupancy telemetry connected to topological reasoning engine
             </p>
           </div>
         </div>
@@ -183,31 +184,31 @@ export const SensorTelemetryPanel: React.FC<SensorTelemetryPanelProps> = ({
           <button
             onClick={handleTriggerSmokeAlarm}
             disabled={actionLoading}
-            className="flex items-center gap-1.5 px-2.5 py-1.5 bg-rose-600/20 hover:bg-rose-600/30 border border-rose-500/40 text-rose-300 rounded-lg text-xs font-medium transition-colors disabled:opacity-50"
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-200 rounded-lg text-xs font-medium transition-colors disabled:opacity-50"
             title="Simulate high smoke particulate in Room B"
           >
-            <BellRing className="w-3.5 h-3.5" />
-            Simulate Smoke Alarm
+            <Flame className="w-3.5 h-3.5 text-rose-400" />
+            <span>Simulate Smoke</span>
           </button>
 
           <button
             onClick={handleTriggerDoorBlockage}
             disabled={actionLoading}
-            className="flex items-center gap-1.5 px-2.5 py-1.5 bg-amber-600/20 hover:bg-amber-600/30 border border-amber-500/40 text-amber-300 rounded-lg text-xs font-medium transition-colors disabled:opacity-50"
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-200 rounded-lg text-xs font-medium transition-colors disabled:opacity-50"
             title="Simulate latch obstruction on Exit Door B"
           >
-            <AlertTriangle className="w-3.5 h-3.5" />
-            Simulate Door Block
+            <DoorClosed className="w-3.5 h-3.5 text-amber-400" />
+            <span>Simulate Door Block</span>
           </button>
 
           <button
             onClick={handleResetSensors}
             disabled={actionLoading}
-            className="flex items-center gap-1 px-2.5 py-1.5 bg-slate-700/60 hover:bg-slate-700 border border-slate-600 text-slate-300 rounded-lg text-xs font-medium transition-colors disabled:opacity-50"
+            className="flex items-center gap-1 px-3 py-1.5 bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-400 hover:text-slate-200 rounded-lg text-xs font-medium transition-colors disabled:opacity-50"
             title="Reset all sensors to normal operating status"
           >
             <RotateCcw className="w-3.5 h-3.5" />
-            Reset
+            <span>Reset Baseline</span>
           </button>
         </div>
       </div>
@@ -222,23 +223,23 @@ export const SensorTelemetryPanel: React.FC<SensorTelemetryPanelProps> = ({
               key={s.sensor_id}
               className={`p-3 rounded-lg border transition-all ${
                 isAlert
-                  ? 'bg-rose-950/40 border-rose-500/70 shadow-sm shadow-rose-950/50'
+                  ? 'bg-rose-950/20 border-rose-500/40'
                   : isWarning
-                  ? 'bg-amber-950/30 border-amber-500/50'
-                  : 'bg-slate-900/60 border-slate-700/60 hover:border-slate-600'
+                  ? 'bg-amber-950/20 border-amber-500/30'
+                  : 'bg-slate-950 border-slate-800/80 hover:border-slate-700'
               }`}
             >
               <div className="flex items-center justify-between mb-1.5">
                 <div className="flex items-center gap-1.5">
                   {getSensorIcon(s.sensor_type)}
-                  <span className="text-xs font-bold text-slate-200">{s.element_label}</span>
+                  <span className="text-xs font-semibold text-slate-200">{s.element_label}</span>
                 </div>
-                <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded uppercase border ${
+                <span className={`text-[9px] font-mono font-medium px-1.5 py-0.5 rounded uppercase border ${
                   isAlert
-                    ? 'bg-rose-500/30 text-rose-300 border-rose-500/50'
+                    ? 'bg-rose-500/10 text-rose-400 border-rose-500/30'
                     : isWarning
-                    ? 'bg-amber-500/30 text-amber-300 border-amber-500/50'
-                    : 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30'
+                    ? 'bg-amber-500/10 text-amber-300 border-amber-500/30'
+                    : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
                 }`}>
                   {s.status}
                 </span>
@@ -248,28 +249,28 @@ export const SensorTelemetryPanel: React.FC<SensorTelemetryPanelProps> = ({
                 {s.location}
               </div>
 
-              <div className="flex items-end justify-between pt-1 border-t border-slate-800">
+              <div className="flex items-end justify-between pt-1 border-t border-slate-850">
                 <div>
-                  <div className="text-sm font-mono font-bold text-white">
+                  <div className="text-sm font-mono font-bold text-white tracking-tight">
                     {s.sensor_type === 'DOOR_CONTACT' 
                       ? (s.current_value === 1.0 ? 'LATCHED' : 'BLOCKED')
                       : `${s.current_value} ${s.unit}`}
                   </div>
                   {s.threshold > 0 && (
-                    <div className="text-[9px] text-slate-400">
+                    <div className="text-[9px] font-mono text-slate-500">
                       Limit: {s.threshold} {s.unit}
                     </div>
                   )}
                 </div>
 
-                <div className="flex items-center gap-1 text-[10px] text-slate-400 font-mono" title={`Battery: ${s.battery_level}%`}>
-                  <BatteryMedium className="w-3 h-3 text-slate-400" />
+                <div className="flex items-center gap-1 text-[10px] text-slate-500 font-mono" title={`Battery: ${s.battery_level}%`}>
+                  <BatteryMedium className="w-3 h-3 text-slate-500" />
                   <span>{s.battery_level}%</span>
                 </div>
               </div>
 
               {s.alert_message && (
-                <div className="mt-2 text-[10px] text-rose-300 bg-rose-500/10 border border-rose-500/20 rounded p-1.5 leading-snug">
+                <div className="mt-2 text-[10px] text-rose-300 bg-rose-500/10 border border-rose-500/20 rounded p-1.5 font-mono leading-snug">
                   {s.alert_message}
                 </div>
               )}

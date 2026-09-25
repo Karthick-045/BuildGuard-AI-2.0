@@ -113,7 +113,7 @@ export const Dashboard: React.FC = () => {
           <div className="flex items-center space-x-2">
             <button
               onClick={() => fetchProjects()}
-              className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition-colors"
+              className="p-1.5 rounded-lg bg-slate-900/80 hover:bg-slate-800 text-slate-400 hover:text-slate-200 border border-slate-800 transition-colors"
               title="Refresh"
             >
               <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
@@ -121,23 +121,24 @@ export const Dashboard: React.FC = () => {
             <button
               onClick={handleLaunchSensorWorkspace}
               disabled={launchingSensorLab}
-              className="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-xs font-bold shadow-md shadow-emerald-950/40 transition-all active:scale-95 disabled:opacity-50"
+              className="flex items-center space-x-2 px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-slate-200 text-xs font-medium border border-slate-800 hover:border-slate-700 transition-all active:scale-[0.98] disabled:opacity-50"
               title="Open sample workspace preloaded with 13 IoT sensors for real-time graph recalculation"
             >
-              <Cpu className="w-3.5 h-3.5" />
-              <span>{launchingSensorLab ? 'Opening Lab...' : 'Sensor Safety Lab'}</span>
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+              <Cpu className="w-3.5 h-3.5 text-slate-400" />
+              <span>{launchingSensorLab ? 'Opening Lab...' : 'Sensor Lab'}</span>
             </button>
             <button
               onClick={() => setShowVoiceModal(true)}
-              className="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500 text-white text-xs font-bold shadow-md shadow-red-950/40 transition-all active:scale-95"
+              className="flex items-center space-x-2 px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-slate-200 text-xs font-medium border border-slate-800 hover:border-slate-700 transition-all active:scale-[0.98]"
               title="Build Safety Graph by speaking building layout"
             >
-              <Mic className="w-3.5 h-3.5" />
+              <Mic className="w-3.5 h-3.5 text-rose-400" />
               <span>Build by Voice</span>
             </button>
             <Link
               to="/projects/new"
-              className="flex items-center space-x-1.5 px-3.5 py-1.5 rounded-lg bg-sky-500 hover:bg-sky-400 text-white text-xs font-semibold shadow-md shadow-sky-500/20 transition-all active:scale-95"
+              className="flex items-center space-x-1.5 px-3.5 py-1.5 rounded-lg bg-sky-600 hover:bg-sky-500 text-white text-xs font-medium shadow-sm transition-all active:scale-[0.98]"
             >
               <Plus className="w-3.5 h-3.5" />
               <span>Create Project</span>
@@ -177,18 +178,18 @@ export const Dashboard: React.FC = () => {
 
         {/* Live Safety Graph & Dynamic Sensor Recalculation Command Center */}
         {data?.projects && data.projects.length > 0 && (
-          <div className="bg-slate-800/80 border border-slate-700/60 rounded-xl p-5 shadow-sm space-y-4">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-700/50 pb-3">
+          <div className="bg-slate-900/70 border border-slate-800 rounded-xl p-5 shadow-sm space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800/80 pb-3">
               <div className="flex items-center space-x-3">
-                <div className="p-2 rounded-lg bg-sky-500/10 border border-sky-500/30 text-sky-400">
-                  <Activity className="w-5 h-5 animate-pulse" />
+                <div className="p-2 rounded-lg bg-slate-800 border border-slate-700 text-sky-400">
+                  <Activity className="w-4 h-4" />
                 </div>
                 <div>
                   <div className="flex items-center gap-2">
-                    <h3 className="font-bold text-white text-base">
-                      Interactive Safety Graph & Real-Time Sensor Telemetry
+                    <h3 className="font-semibold text-white text-sm tracking-tight">
+                      Topological Egress & Sensor Telemetry
                     </h3>
-                    <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                    <span className="px-2 py-0.5 rounded text-[10px] font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
                       Live Recalculation
                     </span>
                   </div>
@@ -208,7 +209,7 @@ export const Dashboard: React.FC = () => {
                     setSelectedProjectId(pid);
                     loadDashboardGraph(pid);
                   }}
-                  className="px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-700 text-white text-xs font-semibold focus:outline-none focus:border-sky-500"
+                  className="px-3 py-1.5 rounded-lg bg-slate-950 border border-slate-700/80 text-white text-xs font-medium focus:outline-none focus:border-slate-500"
                 >
                   {data.projects.map((p) => (
                     <option key={p.id} value={p.id}>
@@ -220,20 +221,20 @@ export const Dashboard: React.FC = () => {
                 {selectedProjectId && (
                   <Link
                     to={`/projects/${selectedProjectId}`}
-                    className="flex items-center space-x-1 px-3 py-1.5 rounded-lg bg-sky-500 hover:bg-sky-400 text-white text-xs font-semibold shadow transition-all active:scale-95"
+                    className="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-medium border border-slate-700 transition-all"
                   >
                     <span>Open Workspace</span>
-                    <ExternalLink className="w-3.5 h-3.5" />
+                    <ExternalLink className="w-3.5 h-3.5 text-slate-400" />
                   </Link>
                 )}
               </div>
             </div>
 
             {/* Embedded Graph View */}
-            <div className="h-[460px] rounded-xl overflow-hidden border border-slate-700/50 bg-slate-900/60 relative">
+            <div className="h-[460px] rounded-lg overflow-hidden border border-slate-800 bg-slate-950 relative">
               {graphLoading && (
-                <div className="absolute inset-0 bg-slate-900/70 backdrop-blur-sm z-30 flex items-center justify-center text-sky-400 text-xs gap-2">
-                  <RefreshCw className="w-4 h-4 animate-spin" />
+                <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-sm z-30 flex items-center justify-center text-slate-300 text-xs gap-2">
+                  <RefreshCw className="w-4 h-4 animate-spin text-sky-400" />
                   <span>Recalculating safety graph...</span>
                 </div>
               )}
@@ -262,9 +263,9 @@ export const Dashboard: React.FC = () => {
               <button
                 onClick={handleLaunchSensorWorkspace}
                 disabled={launchingSensorLab}
-                className="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-emerald-600/30 hover:bg-emerald-600/50 text-emerald-300 border border-emerald-500/30 text-xs font-semibold shadow transition-all active:scale-95 disabled:opacity-50"
+                className="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-800 text-xs font-medium transition-all disabled:opacity-50"
               >
-                <Cpu className="w-3.5 h-3.5" />
+                <Cpu className="w-3.5 h-3.5 text-slate-400" />
                 <span>{launchingSensorLab ? 'Opening Lab...' : 'Sensor Lab'}</span>
               </button>
 
@@ -272,10 +273,10 @@ export const Dashboard: React.FC = () => {
                 <button
                   onClick={handleCreateDemo}
                   disabled={seedingDemo}
-                  className="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold shadow transition-all active:scale-95 disabled:opacity-50"
+                  className="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-medium border border-slate-700 transition-all disabled:opacity-50"
                 >
-                  <Sparkles className="w-3.5 h-3.5" />
-                  <span>{seedingDemo ? 'Creating Demo...' : 'Create Sample Project'}</span>
+                  <Sparkles className="w-3.5 h-3.5 text-sky-400" />
+                  <span>{seedingDemo ? 'Creating Demo...' : 'Load Sample Project'}</span>
                 </button>
               )}
             </div>
@@ -283,49 +284,49 @@ export const Dashboard: React.FC = () => {
 
           {loading ? (
             <div className="p-12 text-center text-slate-400 text-sm">
-              <RefreshCw className="w-6 h-6 animate-spin mx-auto mb-2 text-sky-400" />
+              <RefreshCw className="w-5 h-5 animate-spin mx-auto mb-2 text-slate-500" />
               Loading projects...
             </div>
           ) : !data?.projects || data.projects.length === 0 ? (
-            <div className="bg-slate-800/40 border border-slate-700/50 rounded-2xl p-12 text-center space-y-4">
-              <div className="w-12 h-12 rounded-xl bg-sky-500/10 border border-sky-500/20 text-sky-400 flex items-center justify-center mx-auto">
-                <Building2 className="w-6 h-6" />
+            <div className="bg-slate-900/40 border border-slate-800/80 rounded-xl p-12 text-center space-y-4">
+              <div className="w-12 h-12 rounded-xl bg-slate-800/60 border border-slate-700/60 text-slate-300 flex items-center justify-center mx-auto">
+                <Building2 className="w-6 h-6 text-slate-400" />
               </div>
               <div>
-                <h4 className="font-semibold text-white text-base">No Projects Found</h4>
-                <p className="text-xs text-slate-400 max-w-md mx-auto mt-1">
-                  Get started by speaking your floor plan with NLP, launching the sensor recalculation lab, or loading the preconfigured demo facility.
+                <h4 className="font-medium text-white text-base">No Facilities Configured</h4>
+                <p className="text-xs text-slate-400 max-w-md mx-auto mt-1 leading-relaxed">
+                  Synthesize an architectural layout by voice transcript, launch the real-time IoT sensor recalculation lab, or create a custom project.
                 </p>
               </div>
-              <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
+              <div className="flex flex-wrap items-center justify-center gap-2.5 pt-2">
                 <button
                   onClick={() => setShowVoiceModal(true)}
-                  className="px-4 py-2 rounded-lg bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500 text-white text-xs font-bold shadow-md shadow-red-950/40 transition-all flex items-center gap-1.5 active:scale-95"
+                  className="px-3.5 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-medium border border-slate-700 transition-all flex items-center gap-1.5"
                 >
-                  <Mic className="w-4 h-4" />
+                  <Mic className="w-3.5 h-3.5 text-rose-400" />
                   <span>Build by Voice</span>
                 </button>
                 <button
                   onClick={handleLaunchSensorWorkspace}
                   disabled={launchingSensorLab}
-                  className="px-4 py-2 rounded-lg bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-xs font-bold shadow-md shadow-emerald-950/40 transition-all flex items-center gap-1.5 active:scale-95 disabled:opacity-50"
+                  className="px-3.5 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-medium border border-slate-700 transition-all flex items-center gap-1.5 disabled:opacity-50"
                 >
-                  <Cpu className="w-4 h-4" />
+                  <Cpu className="w-3.5 h-3.5 text-emerald-400" />
                   <span>{launchingSensorLab ? 'Opening...' : 'Launch Sensor Lab'}</span>
                 </button>
                 <button
                   onClick={handleCreateDemo}
                   disabled={seedingDemo}
-                  className="px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold shadow transition-all flex items-center gap-1.5 active:scale-95 disabled:opacity-50"
+                  className="px-3.5 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-medium border border-slate-700 transition-all flex items-center gap-1.5 disabled:opacity-50"
                 >
-                  <Sparkles className="w-4 h-4" />
+                  <Sparkles className="w-3.5 h-3.5 text-sky-400" />
                   <span>{seedingDemo ? 'Generating...' : 'Load Demo Building'}</span>
                 </button>
                 <Link
                   to="/projects/new"
-                  className="px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold border border-slate-700 transition-all flex items-center gap-1.5 active:scale-95"
+                  className="px-3.5 py-2 rounded-lg bg-sky-600 hover:bg-sky-500 text-white text-xs font-medium transition-all flex items-center gap-1.5"
                 >
-                  <Plus className="w-4 h-4" />
+                  <Plus className="w-3.5 h-3.5" />
                   <span>Custom Project</span>
                 </Link>
               </div>

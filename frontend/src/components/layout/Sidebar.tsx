@@ -34,15 +34,15 @@ export const Sidebar: React.FC = () => {
   return (
     <aside className="w-64 bg-slate-900 border-r border-slate-800 flex flex-col h-screen sticky top-0 select-none z-30">
       {/* Brand Header */}
-      <div className="p-5 border-b border-slate-800 flex items-center space-x-3">
-        <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-sky-600 to-indigo-600 flex items-center justify-center shadow-lg shadow-sky-500/20">
-          <ShieldAlert className="w-6 h-6 text-white" />
+      <div className="p-4 border-b border-slate-800 flex items-center space-x-3">
+        <div className="w-8 h-8 rounded-lg bg-slate-800 border border-slate-750 flex items-center justify-center text-sky-400">
+          <ShieldAlert className="w-4 h-4" />
         </div>
         <div>
-          <h1 className="font-bold text-lg text-white tracking-tight flex items-center gap-1.5">
-            BuildGuard <span className="text-xs px-1.5 py-0.5 rounded bg-sky-500/20 text-sky-400 font-semibold border border-sky-500/30">AI</span>
+          <h1 className="font-semibold text-base text-white tracking-tight flex items-center gap-1.5">
+            BuildGuard <span className="text-[10px] px-1.5 py-0.2 rounded bg-sky-500/10 text-sky-400 font-mono font-medium border border-sky-500/20">AI</span>
           </h1>
-          <p className="text-xs text-slate-400 font-medium">Safety & Egress Graph</p>
+          <p className="text-[11px] text-slate-500 font-mono">Safety & Egress Graph</p>
         </div>
       </div>
 
@@ -149,9 +149,9 @@ export const Sidebar: React.FC = () => {
           </span>
         </div>
 
-        <div className="text-[11px] text-slate-400 text-center leading-relaxed">
-          Phase 1: Deterministic Reasoner<br />
-          No External AI Dependencies
+        <div className="text-[11px] text-slate-500 text-center leading-relaxed font-mono">
+          Topological Graph Engine<br />
+          Real-Time Egress Intelligence
         </div>
       </div>
     </aside>

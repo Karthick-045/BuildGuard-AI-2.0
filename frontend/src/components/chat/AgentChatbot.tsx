@@ -267,35 +267,32 @@ export const AgentChatbot: React.FC<AgentChatbotProps> = ({ projectId, projectNa
       {!isOpen && (
         <button
           onClick={() => setIsOpen(true)}
-          className="fixed bottom-6 right-6 z-50 flex items-center gap-2.5 px-4 py-3 bg-gradient-to-r from-sky-600 via-indigo-600 to-emerald-600 hover:from-sky-500 hover:to-emerald-500 text-white rounded-full shadow-xl shadow-indigo-950/60 border border-sky-400/40 transition-all duration-300 hover:scale-105 group"
+          className="fixed bottom-6 right-6 z-50 flex items-center gap-2.5 px-3.5 py-2.5 bg-slate-900/90 hover:bg-slate-800 text-slate-200 rounded-full shadow-2xl shadow-black/70 border border-slate-700/80 backdrop-blur-md transition-all duration-150 hover:scale-[1.02] group"
           title="Open BuildGuard AI Inspector Chatbot"
         >
-          <div className="relative">
-            <Bot className="w-5 h-5 text-white" />
-            <span className="absolute -top-1 -right-1 flex h-2.5 w-2.5">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
-            </span>
+          <div className="relative flex items-center justify-center">
+            <Bot className="w-4 h-4 text-sky-400" />
+            <span className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 rounded-full bg-emerald-400" />
           </div>
-          <span className="text-sm font-semibold tracking-wide">Ask BuildGuard AI</span>
-          <span className="text-[10px] bg-white/20 px-1.5 py-0.5 rounded font-mono">Grounded</span>
+          <span className="text-xs font-semibold tracking-wide text-white">Safety Copilot</span>
+          <span className="text-[10px] bg-slate-800 text-slate-300 border border-slate-700 px-1.5 py-0.5 rounded font-mono">Real-Data</span>
         </button>
       )}
 
       {/* 2. Chat Window / Drawer */}
       {isOpen && (
         <div
-          className={`fixed z-50 transition-all duration-300 ease-out flex flex-col bg-slate-900/95 backdrop-blur-xl border border-slate-700/80 rounded-2xl shadow-2xl shadow-black/80 overflow-hidden ${
+          className={`fixed z-50 transition-all duration-200 ease-out flex flex-col bg-slate-950/95 backdrop-blur-xl border border-slate-800 rounded-xl shadow-2xl shadow-black/80 overflow-hidden ${
             isExpanded
               ? 'inset-6 lg:inset-x-24 lg:inset-y-10'
               : 'bottom-6 right-6 w-[92vw] sm:w-[480px] h-[640px] max-h-[85vh]'
           }`}
         >
           {/* Header */}
-          <div className="flex items-center justify-between px-4 py-3 bg-gradient-to-r from-slate-900 via-indigo-950/60 to-slate-900 border-b border-slate-700/80 select-none">
+          <div className="flex items-center justify-between px-4 py-3 bg-slate-900/90 border-b border-slate-800 select-none">
             <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-sky-500 to-indigo-600 flex items-center justify-center shadow-inner">
-                <Bot className="w-4 h-4 text-white" />
+              <div className="w-7 h-7 rounded-lg bg-slate-800 border border-slate-700 flex items-center justify-center">
+                <Bot className="w-4 h-4 text-sky-400" />
               </div>
               <div>
                 <div className="flex items-center gap-1.5">
@@ -528,17 +525,17 @@ export const AgentChatbot: React.FC<AgentChatbotProps> = ({ projectId, projectNa
             {/* Loading Indicator */}
             {isLoading && (
               <div className="flex gap-2.5 justify-start">
-                <div className="w-6 h-6 rounded-md bg-gradient-to-br from-sky-500 to-indigo-600 flex items-center justify-center shrink-0 mt-0.5">
-                  <Bot className="w-3.5 h-3.5 text-white animate-pulse" />
+                <div className="w-6 h-6 rounded-md bg-slate-800 border border-slate-700 flex items-center justify-center shrink-0 mt-0.5">
+                  <Bot className="w-3.5 h-3.5 text-sky-400" />
                 </div>
-                <div className="bg-slate-800/90 border border-slate-700/70 rounded-2xl rounded-tl-none p-3 shadow-sm flex items-center gap-2">
-                  <div className="flex space-x-1.5">
-                    <div className="w-1.5 h-1.5 bg-sky-400 rounded-full animate-bounce [animation-delay:-0.3s]"></div>
-                    <div className="w-1.5 h-1.5 bg-indigo-400 rounded-full animate-bounce [animation-delay:-0.15s]"></div>
-                    <div className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-bounce"></div>
+                <div className="bg-slate-900 border border-slate-800 rounded-xl rounded-tl-none p-2.5 shadow-sm flex items-center gap-2">
+                  <div className="flex space-x-1">
+                    <div className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce [animation-delay:-0.3s]"></div>
+                    <div className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce [animation-delay:-0.15s]"></div>
+                    <div className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce"></div>
                   </div>
                   <span className="text-[11px] text-slate-400 font-mono">
-                    Querying real backend graph & 8 checks...
+                    Querying safety graph topology & egress rules...
                   </span>
                 </div>
               </div>
@@ -548,7 +545,7 @@ export const AgentChatbot: React.FC<AgentChatbotProps> = ({ projectId, projectNa
           </div>
 
           {/* Input Box */}
-          <div className="p-3 bg-slate-950/90 border-t border-slate-800">
+          <div className="p-3 bg-slate-950 border-t border-slate-800">
             <form
               onSubmit={(e) => {
                 e.preventDefault();
@@ -562,10 +559,10 @@ export const AgentChatbot: React.FC<AgentChatbotProps> = ({ projectId, projectNa
                 type="text"
                 value={inputMessage}
                 onChange={(e) => setInputMessage(e.target.value)}
-                placeholder={isListening ? "🎙️ Listening to your voice... Speak now" : "Ask about egress paths, sensors, what-if simulations..."}
+                placeholder={isListening ? "Listening to audio transcript... Speak now" : "Query egress paths, IoT sensors, what-if simulations..."}
                 disabled={isLoading}
-                className={`flex-1 bg-slate-900 border rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none transition-colors disabled:opacity-60 ${
-                  isListening ? 'border-red-500 ring-1 ring-red-500/50 bg-red-950/20' : 'border-slate-700/80 focus:border-sky-500'
+                className={`flex-1 bg-slate-900 border rounded-lg px-3 py-2 text-xs text-white placeholder-slate-500 focus:outline-none transition-colors disabled:opacity-60 ${
+                  isListening ? 'border-rose-500 ring-1 ring-rose-500/40 bg-rose-950/10' : 'border-slate-800 focus:border-slate-600'
                 }`}
               />
               <button
@@ -579,22 +576,22 @@ export const AgentChatbot: React.FC<AgentChatbotProps> = ({ projectId, projectNa
                   }
                 }}
                 disabled={isLoading}
-                className={`p-2.5 rounded-xl border transition-all ${
+                className={`p-2 rounded-lg border transition-all ${
                   isListening
-                    ? 'bg-red-500/20 border-red-500 text-red-400 animate-pulse ring-2 ring-red-500/30'
-                    : 'bg-slate-800 border-slate-700 text-slate-400 hover:text-white hover:border-slate-500'
+                    ? 'bg-rose-500/10 border-rose-500/40 text-rose-400 ring-2 ring-rose-500/20'
+                    : 'bg-slate-900 border-slate-800 text-slate-400 hover:text-white hover:border-slate-700'
                 }`}
                 title={isListening ? "Listening... Click to stop" : "Speak to AI Copilot (Voice Input)"}
               >
-                {isListening ? <MicOff className="w-4 h-4 text-red-400" /> : <Mic className="w-4 h-4" />}
+                {isListening ? <MicOff className="w-3.5 h-3.5 text-rose-400" /> : <Mic className="w-3.5 h-3.5" />}
               </button>
               <button
                 type="submit"
                 disabled={!inputMessage.trim() || isLoading}
-                className="p-2.5 rounded-xl bg-gradient-to-r from-sky-600 to-indigo-600 hover:from-sky-500 hover:to-indigo-500 text-white font-semibold shadow-md shadow-indigo-950/50 transition-all disabled:opacity-40 disabled:cursor-not-allowed hover:scale-105 active:scale-95"
+                className="p-2 rounded-lg bg-sky-600 hover:bg-sky-500 text-white font-medium shadow-sm transition-all disabled:opacity-40 disabled:cursor-not-allowed"
                 title="Send Message"
               >
-                <Send className="w-4 h-4" />
+                <Send className="w-3.5 h-3.5" />
               </button>
             </form>
           </div>
