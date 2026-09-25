@@ -71,9 +71,10 @@ async def create_project_from_speech(
             "node_count": len(graph_data.nodes),
             "edge_count": len(graph_data.edges),
             "sensor_count": len(layout.get("sensors", [])),
+            "blueprint_path": project.blueprint_path,
             "parsed_layout": layout,
             "graph": graph_data.model_dump(),
-            "message": f"Successfully created '{project.name}' with {len(layout.get('elements', []))} building elements from voice description."
+            "message": f"Successfully created '{project.name}' with CAD Blueprint and {len(layout.get('elements', []))} building elements from voice description."
         }
     except Exception as e:
         logger.error(f"Failed to create project from speech: {e}", exc_info=True)

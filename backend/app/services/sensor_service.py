@@ -282,4 +282,36 @@ class SensorService:
         db.refresh(sensor)
         return sensor
 
+    @classmethod
+    def reset_all_sensors(cls, project_id: int, db: Session) -> List[BuildingSensor]:
+        """
+        Resets all sensors for a project back to normal baseline telemetry values.
+        """
+        sensors = db.query(BuildingSensor).filter(BuildingSensor.project_id == project_id).all()
+        for s in sensors:
+            stype = (s.sensor_type or "").upper()
+            if stype == "SMOKE":
+                s.current_value = 12.0
+                s.status = "NORMAL"
+                s.alert_message = None
+            elif stype == "TEMPERATURE":
+                s.current_value = 22.0
+                s.status = "NORMAL"
+                s.alert_message = None
+            elif stype == "DOOR_CONTACT":
+                s.current_value = 1.0
+                s.status = "NORMAL"
+                s.alert_message = "Door latched, panic hardware operational"
+            elif stype == "OCCUPANCY":
+                s.current_value = 10.0
+                s.status = "NORMAL"
+                s.alert_message = None
+            else:
+                s.status = "NORMAL"
+                s.alert_message = None
+            s.last_reading = datetime.utcnow()
+
+        db.commit()
+        return sensors
+
 sensor_service = SensorService()

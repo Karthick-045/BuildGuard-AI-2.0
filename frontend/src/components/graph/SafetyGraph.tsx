@@ -28,12 +28,14 @@ import {
 import { SafetyGraph as SafetyGraphType } from '../../types';
 import { GraphLegend } from './GraphLegend';
 import { projectApi } from '../../services/api';
+import { SensorAlertPopup, SensorAlertInfo } from '../sensors/SensorAlertPopup';
 
 interface SafetyGraphProps {
   graphData: SafetyGraphType | null;
   projectId?: number | string;
   onNodeClick?: (nodeId: string) => void;
   onRefreshGraph?: () => void;
+  onAlertTriggered?: (alert: SensorAlertInfo) => void;
 }
 
 // Custom Node Component
@@ -154,9 +156,11 @@ const SafetyNodeComponent = ({ data }: { data: any }) => {
   );
 };
 
-export const SafetyGraph: React.FC<SafetyGraphProps> = ({ graphData, projectId, onNodeClick, onRefreshGraph }) => {
+export const SafetyGraph: React.FC<SafetyGraphProps> = ({ graphData, projectId, onNodeClick, onRefreshGraph, onAlertTriggered }) => {
   const nodeTypes = useMemo(() => ({ safetyNode: SafetyNodeComponent }), []);
   const [actionLoading, setActionLoading] = React.useState(false);
+  const [popupAlert, setPopupAlert] = React.useState<SensorAlertInfo | null>(null);
+  const [showPopup, setShowPopup] = React.useState(false);
 
   const handleSimulateCorridorSmoke = async () => {
     if (!projectId) return;
@@ -168,6 +172,20 @@ export const SafetyGraph: React.FC<SafetyGraphProps> = ({ graphData, projectId, 
         status: 'CRITICAL_ALERT',
         alert_message: 'Corridor C heavy smoke alarm triggered'
       });
+      const alertInfo: SensorAlertInfo = {
+        sensor_id: 'SENSOR_SMOKE_CORR_C',
+        sensor_type: 'SMOKE',
+        element_label: 'Corridor C',
+        location: 'Corridor C Ceiling Detector',
+        status: 'CRITICAL_ALERT',
+        current_value: 85.0,
+        threshold: 50.0,
+        unit: 'ppm',
+        alert_message: 'Corridor C heavy smoke alarm triggered (85.0 ppm > 50.0 ppm safety limit)'
+      };
+      setPopupAlert(alertInfo);
+      setShowPopup(true);
+      if (onAlertTriggered) onAlertTriggered(alertInfo);
       if (onRefreshGraph) onRefreshGraph();
     } catch (e) {
       console.error('Failed to trigger smoke alert', e);
@@ -187,6 +205,20 @@ export const SafetyGraph: React.FC<SafetyGraphProps> = ({ graphData, projectId, 
         alert_message: 'Exit B latch obstruction fault'
       });
       await projectApi.simulate(projectId, { action: 'BLOCK', target_element: 'exit_b' });
+      const alertInfo: SensorAlertInfo = {
+        sensor_id: 'SENSOR_DOOR_EXIT_B',
+        sensor_type: 'DOOR_CONTACT',
+        element_label: 'Exit Door B',
+        location: 'Exit Door B Threshold & Panic Bar',
+        status: 'CRITICAL_ALERT',
+        current_value: 0.0,
+        threshold: 0.0,
+        unit: 'state',
+        alert_message: 'Exit B latch obstruction fault / emergency exit blocked'
+      };
+      setPopupAlert(alertInfo);
+      setShowPopup(true);
+      if (onAlertTriggered) onAlertTriggered(alertInfo);
       if (onRefreshGraph) onRefreshGraph();
     } catch (e) {
       console.error('Failed to block exit', e);
@@ -201,6 +233,8 @@ export const SafetyGraph: React.FC<SafetyGraphProps> = ({ graphData, projectId, 
     try {
       await projectApi.resetSensors(projectId);
       await projectApi.resetSimulation(projectId);
+      setShowPopup(false);
+      setPopupAlert(null);
       if (onRefreshGraph) onRefreshGraph();
     } catch (e) {
       console.error('Failed to reset sensors', e);
@@ -274,6 +308,21 @@ export const SafetyGraph: React.FC<SafetyGraphProps> = ({ graphData, projectId, 
 
   const handleNodeClick = useCallback(
     (_: React.MouseEvent, node: Node) => {
+      if (node.data?.is_hazard) {
+        const alertInfo: SensorAlertInfo = {
+          sensor_id: node.data.sensor_id || `SENSOR_${node.id.toUpperCase()}`,
+          sensor_type: node.data.hazard_type || 'SMOKE',
+          element_label: node.data.label,
+          location: `${node.data.label} Safety Zone`,
+          status: 'CRITICAL_ALERT',
+          current_value: parseFloat(node.data.sensor_reading || '85.0') || 85.0,
+          threshold: 50.0,
+          unit: node.data.hazard_type === 'DOOR_BLOCKED' ? 'state' : 'ppm',
+          alert_message: node.data.hazard_message || `Active hazard detected at ${node.data.label}`
+        };
+        setPopupAlert(alertInfo);
+        setShowPopup(true);
+      }
       if (onNodeClick) {
         onNodeClick(node.id);
       }
@@ -381,6 +430,14 @@ export const SafetyGraph: React.FC<SafetyGraphProps> = ({ graphData, projectId, 
           Interactive: Drag nodes • Scroll to Zoom
         </div>
       </div>
+
+      {/* Sensor Threshold Breach Modal Popup */}
+      <SensorAlertPopup
+        isOpen={showPopup}
+        alert={popupAlert}
+        onClose={() => setShowPopup(false)}
+        onResetSensors={handleResetSensors}
+      />
     </div>
   );
 };

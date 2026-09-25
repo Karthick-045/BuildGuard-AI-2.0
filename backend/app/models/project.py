@@ -22,3 +22,11 @@ class Project(Base):
     plan_comparisons = relationship("PlanComparison", back_populates="project", cascade="all, delete-orphan")
     ai_analysis_runs = relationship("AiAnalysisRun", back_populates="project", cascade="all, delete-orphan")
     sensors = relationship("BuildingSensor", back_populates="project", cascade="all, delete-orphan")
+
+    @property
+    def blueprint_path(self):
+        if self.assets:
+            for asset in reversed(self.assets):
+                if asset.asset_type == "BLUEPRINT":
+                    return f"/uploads/blueprints/{asset.file_name}"
+        return None

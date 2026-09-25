@@ -15,15 +15,24 @@ import {
 } from 'lucide-react';
 import { projectApi } from '../../services/api';
 import { BuildingSensor, SensorListResponse } from '../../types';
+import { SensorAlertPopup, SensorAlertInfo } from './SensorAlertPopup';
 
 interface SensorTelemetryPanelProps {
   projectId: number;
+  onAlertTriggered?: (alert: SensorAlertInfo) => void;
+  onSensorsUpdated?: () => void;
 }
 
-export const SensorTelemetryPanel: React.FC<SensorTelemetryPanelProps> = ({ projectId }) => {
+export const SensorTelemetryPanel: React.FC<SensorTelemetryPanelProps> = ({
+  projectId,
+  onAlertTriggered,
+  onSensorsUpdated,
+}) => {
   const [sensorsData, setSensorsData] = useState<SensorListResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
+  const [activePopupAlert, setActivePopupAlert] = useState<SensorAlertInfo | null>(null);
+  const [showPopup, setShowPopup] = useState(false);
 
   const fetchSensors = async () => {
     try {
@@ -52,7 +61,22 @@ export const SensorTelemetryPanel: React.FC<SensorTelemetryPanelProps> = ({ proj
         status: 'CRITICAL_ALERT',
         alert_message: 'High optical density particulate smoke detected in Room B zone 1'
       });
+      const alertInfo: SensorAlertInfo = {
+        sensor_id: 'SENSOR_SMOKE_ROOM_B',
+        sensor_type: 'SMOKE',
+        element_label: 'Room B',
+        location: 'Room B Ceiling Detector Zone 1',
+        status: 'CRITICAL_ALERT',
+        current_value: 78.5,
+        threshold: 50.0,
+        unit: 'ppm',
+        alert_message: 'High optical density particulate smoke detected in Room B zone 1 (78.5 ppm > 50.0 ppm limit)'
+      };
+      setActivePopupAlert(alertInfo);
+      setShowPopup(true);
+      if (onAlertTriggered) onAlertTriggered(alertInfo);
       await fetchSensors();
+      if (onSensorsUpdated) onSensorsUpdated();
     } catch (err) {
       console.error('Failed to trigger smoke alarm', err);
     } finally {
@@ -69,7 +93,22 @@ export const SensorTelemetryPanel: React.FC<SensorTelemetryPanelProps> = ({ proj
         status: 'CRITICAL_ALERT',
         alert_message: 'Exit Door B magnetic panic sensor reports physical latch obstruction'
       });
+      const alertInfo: SensorAlertInfo = {
+        sensor_id: 'SENSOR_DOOR_EXIT_B',
+        sensor_type: 'DOOR_CONTACT',
+        element_label: 'Exit Door B',
+        location: 'Exit Door B Threshold & Panic Bar',
+        status: 'CRITICAL_ALERT',
+        current_value: 0.0,
+        threshold: 0.0,
+        unit: 'state',
+        alert_message: 'Exit Door B magnetic panic sensor reports physical latch obstruction'
+      };
+      setActivePopupAlert(alertInfo);
+      setShowPopup(true);
+      if (onAlertTriggered) onAlertTriggered(alertInfo);
       await fetchSensors();
+      if (onSensorsUpdated) onSensorsUpdated();
     } catch (err) {
       console.error('Failed to trigger door blockage', err);
     } finally {
@@ -81,7 +120,10 @@ export const SensorTelemetryPanel: React.FC<SensorTelemetryPanelProps> = ({ proj
     try {
       setActionLoading(true);
       await projectApi.resetSensors(projectId);
+      setShowPopup(false);
+      setActivePopupAlert(null);
       await fetchSensors();
+      if (onSensorsUpdated) onSensorsUpdated();
     } catch (err) {
       console.error('Failed to reset sensors', err);
     } finally {
@@ -231,10 +273,42 @@ export const SensorTelemetryPanel: React.FC<SensorTelemetryPanelProps> = ({ proj
                   {s.alert_message}
                 </div>
               )}
+
+              {(isAlert || isWarning) && (
+                <button
+                  onClick={() => {
+                    setActivePopupAlert({
+                      sensor_id: s.sensor_id,
+                      sensor_type: s.sensor_type,
+                      element_label: s.element_label,
+                      location: s.location,
+                      status: s.status,
+                      current_value: s.current_value,
+                      threshold: s.threshold,
+                      unit: s.unit,
+                      alert_message: s.alert_message,
+                      last_reading: s.last_reading
+                    });
+                    setShowPopup(true);
+                  }}
+                  className="mt-2 w-full py-1 px-2 rounded bg-rose-600/30 hover:bg-rose-600/50 border border-rose-500/50 text-[10px] text-rose-200 font-bold transition-colors flex items-center justify-center gap-1"
+                >
+                  <AlertTriangle className="w-3 h-3 text-rose-400" />
+                  View Threshold Breach
+                </button>
+              )}
             </div>
           );
         })}
       </div>
+
+      {/* Sensor Threshold Breach Modal Popup */}
+      <SensorAlertPopup
+        isOpen={showPopup}
+        alert={activePopupAlert}
+        onClose={() => setShowPopup(false)}
+        onResetSensors={handleResetSensors}
+      />
     </div>
   );
 };

@@ -95,7 +95,7 @@ export const VoiceBuildingModal: React.FC<VoiceBuildingModalProps> = ({
       );
 
       setSuccessMessage(
-        `🎉 Created "${result.project_name}" with ${result.elements_created} elements and ${result.sensors_seeded} IoT safety sensors!`
+        `🎉 Created "${result.project_name}" with CAD Blueprint, ${result.elements_created} elements, and ${result.sensors_seeded} IoT safety sensors!`
       );
 
       setTimeout(() => {
@@ -127,13 +127,13 @@ export const VoiceBuildingModal: React.FC<VoiceBuildingModalProps> = ({
             </div>
             <div>
               <h2 className="text-lg font-bold text-white flex items-center gap-2">
-                Voice-to-Safety Graph Builder
+                Voice-to-Blueprint & Safety Graph Builder
                 <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
-                  NLP Powered
+                  CAD + NLP Engine
                 </span>
               </h2>
               <p className="text-xs text-slate-400">
-                Speak your building layout (rooms, doors, corridors, stairs, exits) to generate an interactive Safety Graph
+                Speak your building layout (rooms, doors, corridors, stairs, exits) to synthesize an Architectural CAD Blueprint & Safety Graph
               </p>
             </div>
           </div>
@@ -151,17 +151,17 @@ export const VoiceBuildingModal: React.FC<VoiceBuildingModalProps> = ({
           <div className="p-3 bg-slate-800/60 rounded-xl border border-slate-700/60 flex items-center justify-between text-xs text-slate-300">
             <div className="flex items-center gap-2">
               <Volume2 className="w-4 h-4 text-cyan-400" />
-              <span>Voice Input</span>
+              <span>Voice Speech</span>
             </div>
             <span className="text-slate-500">➔</span>
             <div className="flex items-center gap-2">
               <Sparkles className="w-4 h-4 text-purple-400" />
-              <span>Speech NLP + Gemini</span>
+              <span>Gemini NLP Spatial Parser</span>
             </div>
             <span className="text-slate-500">➔</span>
             <div className="flex items-center gap-2">
               <Layers className="w-4 h-4 text-emerald-400" />
-              <span>Safety Graph & Sensors</span>
+              <span>CAD Blueprint & Safety Graph</span>
             </div>
           </div>
 
@@ -308,12 +308,12 @@ export const VoiceBuildingModal: React.FC<VoiceBuildingModalProps> = ({
               {isBuilding ? (
                 <>
                   <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  Generating Safety Graph...
+                  Synthesizing Blueprint & Safety Graph...
                 </>
               ) : (
                 <>
                   <Sparkles className="w-4 h-4" />
-                  Build Safety Graph
+                  Synthesize Blueprint & Safety Graph
                 </>
               )}
             </button>

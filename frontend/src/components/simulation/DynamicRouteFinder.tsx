@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { projectApi } from '../../services/api';
 import { DynamicRouteResponse } from '../../types';
+import { SensorAlertPopup, SensorAlertInfo } from '../sensors/SensorAlertPopup';
 
 interface DynamicRouteFinderProps {
   projectId: number;
@@ -28,6 +29,8 @@ export const DynamicRouteFinder: React.FC<DynamicRouteFinderProps> = ({ projectI
   const [routeResult, setRouteResult] = useState<DynamicRouteResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const [scenarioLoading, setScenarioLoading] = useState(false);
+  const [activeAlert, setActiveAlert] = useState<SensorAlertInfo | null>(null);
+  const [showAlertPopup, setShowAlertPopup] = useState(false);
 
   const rooms = [
     'Room A', 'Room B', 'Room C', 
@@ -70,6 +73,19 @@ export const DynamicRouteFinder: React.FC<DynamicRouteFinderProps> = ({ projectI
         status: 'CRITICAL_ALERT',
         alert_message: 'High density smoke plume detected in Corridor C'
       });
+      const alertInfo: SensorAlertInfo = {
+        sensor_id: 'SENSOR_SMOKE_CORR_C',
+        sensor_type: 'SMOKE',
+        element_label: 'Corridor C',
+        location: 'Corridor C Central Ceiling',
+        status: 'CRITICAL_ALERT',
+        current_value: 82.0,
+        threshold: 50.0,
+        unit: 'ppm',
+        alert_message: 'High density smoke plume detected in Corridor C (82.0 ppm > 50.0 ppm limit)'
+      };
+      setActiveAlert(alertInfo);
+      setShowAlertPopup(true);
       await calculateRoute();
     } catch (err) {
       console.error('Failed to simulate smoke scenario', err);
@@ -92,6 +108,19 @@ export const DynamicRouteFinder: React.FC<DynamicRouteFinderProps> = ({ projectI
         action: 'BLOCK',
         target_element: 'exit_b'
       });
+      const alertInfo: SensorAlertInfo = {
+        sensor_id: 'SENSOR_DOOR_EXIT_B',
+        sensor_type: 'DOOR_CONTACT',
+        element_label: 'Exit Door B',
+        location: 'Exit Door B Latch & Panic Hardware',
+        status: 'CRITICAL_ALERT',
+        current_value: 0.0,
+        threshold: 0.0,
+        unit: 'state',
+        alert_message: 'Exit Door B mechanical latch failure / obstruction'
+      };
+      setActiveAlert(alertInfo);
+      setShowAlertPopup(true);
       await calculateRoute();
     } catch (err) {
       console.error('Failed to simulate exit block scenario', err);
@@ -106,6 +135,8 @@ export const DynamicRouteFinder: React.FC<DynamicRouteFinderProps> = ({ projectI
     try {
       await projectApi.resetSensors(projectId);
       await projectApi.resetSimulation(projectId);
+      setShowAlertPopup(false);
+      setActiveAlert(null);
       await calculateRoute();
     } catch (err) {
       console.error('Failed to restore routes', err);
@@ -293,6 +324,15 @@ export const DynamicRouteFinder: React.FC<DynamicRouteFinderProps> = ({ projectI
           </div>
         </div>
       )}
+
+      {/* Sensor Threshold Breach Modal Popup */}
+      <SensorAlertPopup
+        isOpen={showAlertPopup}
+        alert={activeAlert}
+        onClose={() => setShowAlertPopup(false)}
+        onRecalculateRoute={() => calculateRoute()}
+        onResetSensors={handleRestore}
+      />
     </div>
   );
 };
