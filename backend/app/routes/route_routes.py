@@ -32,7 +32,7 @@ def find_dynamic_evacuation_route(
     try:
         result = route_finder_service.find_dynamic_route(
             project_id=project_id,
-            start_room=payload.start_room,
+            start_room=payload.get_start_room(),
             avoid_elements=payload.avoid_elements,
             use_sensor_alerts=payload.use_sensor_alerts,
             db=db

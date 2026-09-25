@@ -46,9 +46,18 @@ class RouteFinderService:
                     "message": alert.get("alert_message")
                 })
                 # Find matching graph node ID
+                norm_lbl = elem_lbl.strip().lower()
+                norm_key = norm_lbl.replace(" ", "_")
+                matched = False
                 for n_id, data in G.nodes(data=True):
-                    if (elem_lbl.lower() in data.get("label", "").lower()) or (data.get("label", "").lower() in elem_lbl.lower()):
+                    if norm_lbl == data.get("label", "").lower() or norm_key == n_id.lower():
                         avoid_nodes.add(n_id)
+                        matched = True
+                if not matched:
+                    for n_id, data in G.nodes(data=True):
+                        node_lbl = data.get("label", "").lower()
+                        if norm_lbl and (norm_lbl in node_lbl or node_lbl in norm_lbl):
+                            avoid_nodes.add(n_id)
 
         # 2. Check if latest simulation has blocked elements
         if db:
