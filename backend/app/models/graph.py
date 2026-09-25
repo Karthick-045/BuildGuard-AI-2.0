@@ -1,5 +1,5 @@
 from sqlalchemy import Column, Integer, String, ForeignKey
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import relationship as orm_relationship
 from app.database import Base
 
 class GraphNode(Base):
@@ -11,7 +11,7 @@ class GraphNode(Base):
     node_type = Column(String(50), nullable=False)  # ROOM, DOOR, CORRIDOR, STAIR, RAMP, EXIT
     label = Column(String(100), nullable=False)
 
-    project = relationship("Project", back_populates="graph_nodes")
+    project = orm_relationship("Project", back_populates="graph_nodes")
 
 
 class GraphEdge(Base):
@@ -23,4 +23,4 @@ class GraphEdge(Base):
     target_node = Column(String(100), nullable=False)
     relationship = Column(String(50), default="CONNECTS_TO")  # CONNECTS_TO, LEADS_TO, ESCAPE_ROUTE_TO
 
-    project = relationship("Project", back_populates="graph_edges")
+    project = orm_relationship("Project", back_populates="graph_edges")
