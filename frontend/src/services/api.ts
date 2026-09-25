@@ -40,6 +40,12 @@ export const projectApi = {
     return response.data;
   },
 
+  // Delete project by ID
+  deleteProject: async (id: number | string): Promise<{ success: boolean; message: string }> => {
+    const response = await api.delete(`/projects/${id}`);
+    return response.data;
+  },
+
   // Upload blueprint
   uploadBlueprint: async (id: number | string, file: File): Promise<any> => {
     const formData = new FormData();

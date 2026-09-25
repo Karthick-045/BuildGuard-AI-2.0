@@ -129,3 +129,23 @@ def get_project(project_id: int, db: Session = Depends(get_db)):
         blueprint_path=f"/uploads/blueprints/{blueprint_asset.file_name}" if blueprint_asset else None,
         site_photos_count=photos_count
     )
+
+@router.delete("/{project_id}", status_code=status.HTTP_200_OK)
+def delete_project(project_id: int, db: Session = Depends(get_db)):
+    """
+    Deletes a project and all associated assets, findings, building elements, sensors, and simulations.
+    """
+    project = db.query(Project).filter(Project.id == project_id).first()
+    if not project:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Project with ID {project_id} not found."
+        )
+
+    db.delete(project)
+    db.commit()
+    return {
+        "success": True,
+        "message": f"Project {project_id} ('{project.name}') and all associated data successfully deleted."
+    }
+
