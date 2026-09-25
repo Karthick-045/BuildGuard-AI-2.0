@@ -187,4 +187,16 @@ export const projectApi = {
     });
     return response.data;
   },
+
+  // Create or retrieve designated Sample IoT Sensor Workspace
+  createSampleSensorWorkspace: async (): Promise<{
+    success: boolean;
+    project_id: number;
+    project_name: string;
+    message: string;
+    graph: SafetyGraph;
+  }> => {
+    const response = await api.post("/projects/sample-sensor-workspace");
+    return response.data;
+  },
 };

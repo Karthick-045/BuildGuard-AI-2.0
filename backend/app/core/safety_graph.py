@@ -158,8 +158,9 @@ class SafetyGraphEngine:
         ]
 
         # Find all room nodes in original graph
+        source_graph = G if G is not None else self.graph
         all_rooms = [
-            (n, attr.get("label", n)) for n, attr in self.graph.nodes(data=True)
+            (n, attr.get("label", n)) for n, attr in source_graph.nodes(data=True)
             if attr.get("type") == "ROOM"
         ]
 

@@ -2,6 +2,7 @@ from sqlalchemy.orm import Session
 import networkx as nx
 from typing import Optional, List
 from app.models.graph import GraphNode, GraphEdge
+from app.models.building_element import BuildingElement
 from app.models.simulation import SimulationRun
 from app.core.safety_graph import safety_graph_engine
 from app.services.sensor_service import sensor_service
@@ -45,8 +46,72 @@ class GraphService:
         Retrieves graph representation for project, with dynamic articulation points,
         active simulation overlay, and live IoT sensor hazards recalculation.
         """
-        # Ensure graph exists in memory
-        G = safety_graph_engine.build_demo_graph()
+        # 0. Load custom nodes and edges from database if they exist
+        db_nodes = db.query(GraphNode).filter(GraphNode.project_id == project_id).all()
+        db_edges = db.query(GraphEdge).filter(GraphEdge.project_id == project_id).all()
+        db_elements = {
+            e.label: e for e in db.query(BuildingElement).filter(BuildingElement.project_id == project_id).all()
+        }
+
+        if db_nodes and len(db_nodes) > 0 and db_edges and len(db_edges) > 0:
+            G = nx.Graph()
+            room_idx = 0
+            door_idx = 0
+            corr_idx = 0
+            stair_idx = 0
+            exit_idx = 0
+            ramp_idx = 0
+            other_idx = 0
+
+            for idx, n in enumerate(db_nodes):
+                elem = db_elements.get(n.label) or db_elements.get(n.node_key)
+                ntype = (n.node_type or "ROOM").upper()
+
+                if elem and elem.x and elem.y and (elem.x != 100 or elem.y != 100):
+                    pos = {"x": elem.x, "y": elem.y}
+                else:
+                    if ntype == "ROOM":
+                        col = room_idx % 2
+                        row = room_idx // 2
+                        pos = {"x": 100 if col == 0 else 240, "y": 100 + row * 130}
+                        room_idx += 1
+                    elif ntype == "DOOR":
+                        col = door_idx % 2
+                        row = door_idx // 2
+                        pos = {"x": 360 if col == 0 else 460, "y": 100 + row * 110}
+                        door_idx += 1
+                    elif ntype == "CORRIDOR":
+                        pos = {"x": 580, "y": 130 + corr_idx * 140}
+                        corr_idx += 1
+                    elif ntype in ["STAIR", "RAMP"]:
+                        pos = {"x": 720, "y": 160 + (stair_idx + ramp_idx) * 130}
+                        if ntype == "STAIR":
+                            stair_idx += 1
+                        else:
+                            ramp_idx += 1
+                    elif ntype == "EXIT":
+                        pos = {"x": 880, "y": 180 + exit_idx * 160}
+                        exit_idx += 1
+                    else:
+                        pos = {"x": 400 + (other_idx % 3) * 150, "y": 450 + (other_idx // 3) * 100}
+                        other_idx += 1
+
+                G.add_node(
+                    n.node_key,
+                    id=n.node_key,
+                    type=ntype,
+                    label=n.label or n.node_key,
+                    position=pos,
+                    is_blocked=False,
+                    is_affected=False,
+                    is_bottleneck=False
+                )
+
+            for e in db_edges:
+                G.add_edge(e.source_node, e.target_node, relationship=e.relationship or "CONNECTS_TO")
+        else:
+            # Fallback to demo graph
+            G = safety_graph_engine.build_demo_graph()
 
         # 1. Check if there is an active simulation run for this project
         latest_sim = (

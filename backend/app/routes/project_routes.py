@@ -36,6 +36,65 @@ def create_project(payload: ProjectCreate, db: Session = Depends(get_db)):
         site_photos_count=0
     )
 
+@router.post("/sample-sensor-workspace", status_code=status.HTTP_201_CREATED)
+def create_sample_sensor_workspace(db: Session = Depends(get_db)):
+    """
+    Creates or loads the dedicated IoT Sensor Simulation Workspace preloaded with
+    13 building sensors, structural graph, and dynamic safety recalculation support.
+    """
+    from app.services.sensor_service import sensor_service
+    from app.services.graph_service import graph_service
+
+    sample_name = "IoT Sensor Safety & Dynamic Recalculation Lab"
+    existing = db.query(Project).filter(Project.name == sample_name).first()
+    if existing:
+        # Reset sensors to baseline
+        sensor_service.reset_all_sensors(existing.id, db)
+        graph_data = graph_service.get_project_graph(existing.id, db)
+        return {
+            "success": True,
+            "project_id": existing.id,
+            "project_name": existing.name,
+            "message": "Loaded existing Sensor Safety Lab workspace with baseline telemetry.",
+            "graph": graph_data.model_dump()
+        }
+
+    # Create project
+    project = Project(
+        name=sample_name,
+        building_type="Healthcare",
+        floors=2
+    )
+    db.add(project)
+    db.commit()
+    db.refresh(project)
+
+    from app.services.blueprint_service import blueprint_service
+    from app.services.bottleneck_service import bottleneck_service
+
+    # 1. Populate demo elements
+    blueprint_service.generate_demo_elements(project.id, db, None)
+
+    # 2. Sync graph
+    graph_service.sync_project_graph(project.id, db)
+
+    # 3. Evaluate 8 checks
+    bottleneck_service.analyze_and_record_findings(project.id, db, project.building_type)
+
+    # 4. Initialize sensors
+    sensor_service.get_or_init_project_sensors(project.id, db)
+
+    # 5. Fetch computed graph
+    graph_data = graph_service.get_project_graph(project.id, db)
+
+    return {
+        "success": True,
+        "project_id": project.id,
+        "project_name": project.name,
+        "message": "Initialized new Sample Sensor Workspace with 13 IoT sensors and dynamic graph.",
+        "graph": graph_data.model_dump()
+    }
+
 @router.get("", response_model=ProjectListResponse)
 def get_projects(db: Session = Depends(get_db)):
     """

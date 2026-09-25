@@ -102,9 +102,8 @@ export const VoiceBuildingModal: React.FC<VoiceBuildingModalProps> = ({
         onClose();
         if (onProjectCreated) {
           onProjectCreated(result.project_id);
-        } else {
-          navigate(`/projects/${result.project_id}`);
         }
+        navigate(`/projects/${result.project_id}`);
       }, 1200);
     } catch (err: any) {
       console.error('Failed to build project from speech:', err);

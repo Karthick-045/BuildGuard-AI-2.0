@@ -96,7 +96,40 @@ def test_voice_and_sensor_graph():
     assert hazard_nodes[0]["hazard_type"] == "SMOKE"
     assert "ppm" in (hazard_nodes[0].get("sensor_reading") or "")
 
-    print("\n[PASS] All voice-to-graph and dynamic sensor recalculation tests passed successfully!")
+    print("\n--- 5. Testing Dedicated Sample Sensor Workspace Creation & Recalculation ---")
+    sample_res = client.post("/api/projects/sample-sensor-workspace")
+    assert sample_res.status_code in [200, 201], f"Sample sensor workspace failed: {sample_res.text}"
+    sample_data = sample_res.json()
+    print("Sample Sensor Workspace initialized:", sample_data["project_name"], f"(ID: {sample_data['project_id']})")
+    assert sample_data["success"] is True
+    sample_pid = sample_data["project_id"]
+
+    # Verify sensors
+    s_list_res = client.get(f"/api/projects/{sample_pid}/sensors")
+    assert s_list_res.status_code == 200
+    total_sensors = s_list_res.json()["total_sensors"]
+    print(f"Sample Workspace has {total_sensors} sensors deployed across all zones.")
+    assert total_sensors >= 10
+
+    # Trigger hazard on Corridor C (the articulation point)
+    corr_alert = client.post(f"/api/projects/{sample_pid}/sensors/trigger-alert", json={
+        "sensor_id": "SENSOR_SMOKE_CORR_C",
+        "value": 90.0,
+        "status": "CRITICAL_ALERT",
+        "alert_message": "Heavy smoke detected in central Corridor C"
+    })
+    assert corr_alert.status_code == 200
+
+    # Verify graph recalculates dynamic state and isolates severed paths
+    sample_graph_res = client.get(f"/api/projects/{sample_pid}/graph")
+    assert sample_graph_res.status_code == 200
+    sample_graph = sample_graph_res.json()
+    print("Sample Workspace Dynamic Safety State:", sample_graph["dynamic_safety_state"])
+    print("Active hazard count:", sample_graph["active_hazard_count"])
+    assert sample_graph["dynamic_safety_state"] in ["BLOCKED", "HAZARD"]
+    assert sample_graph["active_hazard_count"] >= 1
+
+    print("\n[PASS] All voice-to-graph, dynamic sensor recalculation, and sample sensor workspace tests passed successfully!")
 
 if __name__ == "__main__":
     test_voice_and_sensor_graph()

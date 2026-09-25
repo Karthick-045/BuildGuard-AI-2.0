@@ -348,8 +348,8 @@ class VoiceService:
                 location=s.get("location", "Ceiling"),
                 status="NORMAL",
                 current_value=12.0 if s.get("sensor_type") == "SMOKE" else (22.0 if s.get("sensor_type") == "TEMPERATURE" else 1.0),
-                unit=s.get("unit", "ppm"),
-                threshold=s.get("threshold", 50.0),
+                unit=s.get("unit") or ("ppm" if s.get("sensor_type") == "SMOKE" else ("°C" if s.get("sensor_type") == "TEMPERATURE" else "state")),
+                threshold=s.get("threshold") or 50.0,
                 battery_level=98,
                 alert_message=None
             )
