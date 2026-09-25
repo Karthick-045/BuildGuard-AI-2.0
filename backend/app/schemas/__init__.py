@@ -5,6 +5,12 @@ from app.schemas.finding import FindingCreate, FindingResponse
 from app.schemas.simulation import SimulationRequest, SimulationResponse, ResetSimulationResponse
 from app.schemas.ai_analysis import AiAnalysisResponse
 from app.schemas.chat import ChatMessageRequest, ChatMessageResponse, ChatStatusResponse
+from app.schemas.sensor import (
+    SensorResponse,
+    SensorTelemetryUpdate,
+    SensorTriggerAlertRequest,
+    SensorListResponse
+)
 
 __all__ = [
     "ProjectCreate",
@@ -26,4 +32,8 @@ __all__ = [
     "ChatMessageRequest",
     "ChatMessageResponse",
     "ChatStatusResponse",
+    "SensorResponse",
+    "SensorTelemetryUpdate",
+    "SensorTriggerAlertRequest",
+    "SensorListResponse"
 ]

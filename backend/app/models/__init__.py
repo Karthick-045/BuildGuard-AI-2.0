@@ -7,6 +7,7 @@ from app.models.finding import Finding
 from app.models.simulation import SimulationRun
 from app.models.plan_comparison import PlanComparison
 from app.models.ai_analysis import AiAnalysisRun
+from app.models.sensor import BuildingSensor
 from app.models.ai_models import (
     EvidenceQualityModel,
     OCRPerceptionModel,
@@ -28,6 +29,7 @@ __all__ = [
     "SimulationRun",
     "PlanComparison",
     "AiAnalysisRun",
+    "BuildingSensor",
     "EvidenceQualityModel",
     "OCRPerceptionModel",
     "YOLOVisionModel",

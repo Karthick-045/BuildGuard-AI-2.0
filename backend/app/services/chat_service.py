@@ -26,6 +26,7 @@ from app.models.simulation import SimulationRun
 from app.models.asset import Asset
 from app.models.ai_models import BuildingContextModel
 from app.core.safety_graph import safety_graph_engine
+from app.services.sensor_service import sensor_service
 
 logger = logging.getLogger("buildguard.chat")
 
@@ -162,6 +163,24 @@ class ChatService:
             for a in assets
         ]
 
+        # 8. IoT Building Safety Sensors Telemetry
+        sensor_summary = sensor_service.get_sensor_summary(project_id, db)
+        sensors_list = [
+            {
+                "sensor_id": s.sensor_id,
+                "sensor_type": s.sensor_type,
+                "element_label": s.element_label,
+                "location": s.location,
+                "status": s.status,
+                "current_value": s.current_value,
+                "unit": s.unit,
+                "threshold": s.threshold,
+                "battery_level": s.battery_level,
+                "alert_message": s.alert_message
+            }
+            for s in sensor_service.get_or_init_project_sensors(project_id, db)
+        ]
+
         return {
             "project": project_info,
             "element_counts": element_types,
@@ -183,7 +202,9 @@ class ChatService:
             "findings": findings_data,
             "simulations": simulations_data,
             "plan_comparisons": comparisons_data,
-            "assets": assets_data
+            "assets": assets_data,
+            "sensor_summary": sensor_summary,
+            "sensors": sensors_list
         }
 
     @staticmethod
@@ -240,7 +261,45 @@ class ChatService:
                     f"- Alternate paths through secondary corridors or fire stairs remain active."
                 )
 
-        # 2. Articulation points / single point of failure
+        # 2. IoT Building Safety Sensors & Telemetry
+        if any(w in q for w in ["sensor", "telemetry", "smoke", "temperature", "heat", "alarm", "fire", "co2", "occupancy", "iot"]):
+            sensor_summary = context.get("sensor_summary", {})
+            sensors = context.get("sensors", [])
+            alerts = sensor_summary.get("active_alerts", [])
+            total = sensor_summary.get("total_sensors", len(sensors))
+
+            if alerts:
+                res = f"### 🚨 ACTIVE SENSOR HAZARD ALARMS ({len(alerts)} Triggered)\n\n"
+                for a in alerts:
+                    res += f"- **{a['sensor_id']}** ({a['sensor_type']}) at `{a['location']}`:\n"
+                    res += f"  - **Current Reading**: `{a['current_value']} {a['unit']}` (Threshold: `{a['threshold']} {a['unit']}`)\n"
+                    res += f"  - **Alert Level**: ⚠️ **{a['status']}**\n"
+                    if a.get('alert_message'):
+                        res += f"  - **Incident**: {a['alert_message']}\n"
+                
+                res += "\n**AI Egress Safety Correlation:**\n"
+                for a in alerts:
+                    loc = a.get("element_label", "")
+                    if "corridor c" in loc.lower() or "exit b" in loc.lower():
+                        res += f"- ⚠️ **CRITICAL CORRIDOR THREAT**: Hazard at `{loc}` impacts an **articulation point**. Section 12 evacuation protocols mandate rerouting occupants away from this wing immediately.\n"
+                return res
+
+            res = f"### 📡 IoT Building Safety Sensors Telemetry\n\n"
+            res += f"BuildGuard IoT network is actively monitoring **{total} safety sensors** in `{context['project']['name']}`:\n"
+            res += f"- **System Status**: ✅ **ALL SENSORS NORMAL** (0 active alarms)\n"
+            by_type = sensor_summary.get("by_type", {})
+            res += f"- **Sensor Inventory**: " + ", ".join(f"{cnt} {st.title()}" for st, cnt in by_type.items()) + "\n\n"
+
+            res += "**Live Sample Readings**:\n"
+            for s in sensors[:8]:
+                val_str = f"{s['current_value']} {s['unit']}" if s['unit'] else str(s['current_value'])
+                thresh_str = f"(Threshold: {s['threshold']} {s['unit']})" if s['threshold'] else ""
+                res += f"- **{s['element_label']}** (`{s['sensor_id']}`): `{val_str}` {thresh_str} — Status: **{s['status']}** (Battery: {s['battery_level']}%)\n"
+            
+            res += "\n*All sensor telemetry streams continuously into the Safety Graph Engine to trigger automated evacuation rerouting upon hazard detection.*"
+            return res
+
+        # 3. Articulation points / single point of failure
         if any(w in q for w in ["articulation", "single point of failure", "bottleneck", "critical node", "critical element"]):
             aps = context["graph"]["articulation_points"]
             if not aps:
@@ -394,6 +453,8 @@ GROUND TRUTH BACKEND DATA FOR CURRENT PROJECT:
 - Detailed Findings: {json.dumps(context.get('findings', []))}
 - Plan vs Actual Comparisons: {json.dumps(context.get('plan_comparisons', []))}
 - Recent Simulations: {json.dumps(context.get('simulations', []))}
+- IoT Building Safety Sensors Telemetry: {json.dumps(context.get('sensors', []))}
+- Active Sensor Alarms: {json.dumps(context.get('sensor_summary', {}).get('active_alerts', []))}
 """
 
     @classmethod

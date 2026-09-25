@@ -168,6 +168,8 @@ export const AgentChatbot: React.FC<AgentChatbotProps> = ({ projectId, projectNa
 
   // Quick prompt suggestions
   const quickPrompts = [
+    { label: '📡 Sensor Telemetry', query: 'What is the status of the building sensors and telemetry?' },
+    { label: '🔥 Active Alarms', query: 'Are there any fire, smoke, or hazard alarms active right now?' },
     { label: '🔍 Articulation Points', query: 'Which elements are articulation points in this building?' },
     { label: '⚠️ Block Exit B', query: 'What happens if Exit B is blocked?' },
     { label: '📋 8 Safety Checks', query: 'Summarize the 8 safety checks for this project.' },

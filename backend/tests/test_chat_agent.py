@@ -101,10 +101,50 @@ def test_chat_agent():
     reply_data = chat_res.json()
     print("Key test reply snippet:\n", reply_data["reply"][:250], "...")
     assert reply_data["success"] is True
-    # Should safely fallback without crashing
     assert "Remediation" in reply_data["reply"] or "action" in reply_data["reply"].lower()
 
-    print("\n✅ ALL CHAT AGENT TESTS PASSED!")
+    print("\n--- 9. Testing IoT Building Sensors Endpoint ---")
+    sensor_res = client.get(f"/api/projects/{project_id}/sensors")
+    assert sensor_res.status_code == 200, f"Sensors failed: {sensor_res.text}"
+    sensor_data = sensor_res.json()
+    print(f"Sensors verified: {sensor_data['total_sensors']} total, {sensor_data['active_alerts_count']} active alerts")
+    assert sensor_data["total_sensors"] >= 10
+    assert "SMOKE" in sensor_data["by_type"]
+    assert "TEMPERATURE" in sensor_data["by_type"]
+
+    print("\n--- 10. Testing Chatbot Sensor Telemetry Query ---")
+    chat_sensor = client.post(f"/api/projects/{project_id}/chat", json={
+        "message": "What is the status of the building sensors and telemetry?"
+    })
+    assert chat_sensor.status_code == 200
+    sensor_reply = chat_sensor.json()
+    print("Chatbot Sensor Telemetry snippet:\n", sensor_reply["reply"][:250], "...")
+    assert "sensors" in sensor_reply["reply"].lower() or "telemetry" in sensor_reply["reply"].lower()
+
+    print("\n--- 11. Testing Sensor Trigger Alert & Chatbot Hazard Notification ---")
+    alert_res = client.post(f"/api/projects/{project_id}/sensors/trigger-alert", json={
+        "sensor_id": "SENSOR_SMOKE_ROOM_B",
+        "value": 75.0,
+        "status": "CRITICAL_ALERT",
+        "alert_message": "Dense particulate smoke detected in Room B"
+    })
+    assert alert_res.status_code == 200
+
+    chat_alert = client.post(f"/api/projects/{project_id}/chat", json={
+        "message": "Are there any fire or smoke alarms triggered right now?"
+    })
+    assert chat_alert.status_code == 200
+    alert_reply = chat_alert.json()
+    print("Chatbot Sensor Alarm snippet:\n", alert_reply["reply"][:300], "...")
+    assert "SENSOR_SMOKE_ROOM_B" in alert_reply["reply"] or "Room B" in alert_reply["reply"]
+
+    print("\n--- 12. Resetting Sensor Telemetry ---")
+    reset_res = client.post(f"/api/projects/{project_id}/sensors/reset")
+    assert reset_res.status_code == 200
+    print("Sensor reset response:", reset_res.json())
+
+    print("\n✅ ALL CHAT AGENT & SENSOR TELEMETRY TESTS PASSED!")
 
 if __name__ == "__main__":
     test_chat_agent()
+

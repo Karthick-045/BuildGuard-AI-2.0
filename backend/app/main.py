@@ -12,7 +12,8 @@ from app.routes import (
     graph_router,
     finding_router,
     simulation_router,
-    chat_router
+    chat_router,
+    sensor_router
 )
 
 # Initialize logger
@@ -64,6 +65,7 @@ app.include_router(graph_router, prefix=settings.API_PREFIX)
 app.include_router(finding_router, prefix=settings.API_PREFIX)
 app.include_router(simulation_router, prefix=settings.API_PREFIX)
 app.include_router(chat_router, prefix=settings.API_PREFIX)
+app.include_router(sensor_router, prefix=settings.API_PREFIX)
 
 @app.get("/")
 def root():

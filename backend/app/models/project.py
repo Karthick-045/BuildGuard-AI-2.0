@@ -21,3 +21,4 @@ class Project(Base):
     simulation_runs = relationship("SimulationRun", back_populates="project", cascade="all, delete-orphan")
     plan_comparisons = relationship("PlanComparison", back_populates="project", cascade="all, delete-orphan")
     ai_analysis_runs = relationship("AiAnalysisRun", back_populates="project", cascade="all, delete-orphan")
+    sensors = relationship("BuildingSensor", back_populates="project", cascade="all, delete-orphan")

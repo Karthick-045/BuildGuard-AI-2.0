@@ -27,6 +27,7 @@ import { SafetyGraph } from '../components/graph/SafetyGraph';
 import { FindingsPanel } from '../components/findings/FindingsPanel';
 import { WhatIfPanel } from '../components/simulation/WhatIfPanel';
 import { AgentChatbot } from '../components/chat/AgentChatbot';
+import { SensorTelemetryPanel } from '../components/sensors/SensorTelemetryPanel';
 import { projectApi } from '../services/api';
 import { 
   Project, 
@@ -327,7 +328,10 @@ export const ProjectWorkspace: React.FC = () => {
           </div>
         </div>
 
-        {/* 3. Findings Panel */}
+        {/* 3. IoT Building Safety Sensor Telemetry */}
+        <SensorTelemetryPanel projectId={id} />
+
+        {/* 4. Findings Panel */}
         <FindingsPanel findings={findings} />
 
         {/* 4. What-If Simulation Panel */}

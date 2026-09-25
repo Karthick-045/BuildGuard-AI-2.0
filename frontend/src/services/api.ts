@@ -8,7 +8,9 @@ import {
   SimulationRequest,
   SimulationResponse,
   ChatResponse,
-  ChatStatus
+  ChatStatus,
+  BuildingSensor,
+  SensorListResponse
 } from "../types";
 
 export const api = axios.create({
@@ -120,6 +122,27 @@ export const projectApi = {
   // Get server-side chat status & configuration
   getChatStatus: async (): Promise<ChatStatus> => {
     const response = await api.get<ChatStatus>("/chat/status");
+    return response.data;
+  },
+
+  // Get project IoT sensors telemetry
+  getSensors: async (projectId: number | string): Promise<SensorListResponse> => {
+    const response = await api.get<SensorListResponse>(`/projects/${projectId}/sensors`);
+    return response.data;
+  },
+
+  // Trigger simulated hazard on a sensor
+  triggerSensorAlert: async (
+    projectId: number | string,
+    data: { sensor_id: string; value: number; status?: string; alert_message?: string }
+  ): Promise<BuildingSensor> => {
+    const response = await api.post<BuildingSensor>(`/projects/${projectId}/sensors/trigger-alert`, data);
+    return response.data;
+  },
+
+  // Reset sensors telemetry to baseline
+  resetSensors: async (projectId: number | string): Promise<{ success: boolean; message: string }> => {
+    const response = await api.post(`/projects/${projectId}/sensors/reset`);
     return response.data;
   },
 };

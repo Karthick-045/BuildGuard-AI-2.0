@@ -145,3 +145,27 @@ export interface ChatStatus {
   default_provider: string;
 }
 
+export interface BuildingSensor {
+  id: number;
+  sensor_id: string;
+  sensor_type: 'SMOKE' | 'TEMPERATURE' | 'DOOR_CONTACT' | 'OCCUPANCY' | 'CO2' | string;
+  element_label: string;
+  location: string;
+  status: 'NORMAL' | 'WARNING' | 'CRITICAL_ALERT' | 'OFFLINE' | string;
+  current_value: number;
+  unit: string;
+  threshold: number;
+  battery_level: number;
+  last_reading?: string;
+  alert_message?: string | null;
+}
+
+export interface SensorListResponse {
+  total_sensors: number;
+  active_alerts_count: number;
+  by_type: Record<string, number>;
+  by_status: Record<string, number>;
+  sensors: BuildingSensor[];
+}
+
+
