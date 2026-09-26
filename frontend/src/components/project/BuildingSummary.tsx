@@ -22,12 +22,13 @@ export const BuildingSummary: React.FC<BuildingSummaryProps> = ({
   onAnalyze,
   analyzing = false,
 }) => {
-  const rooms = summary?.rooms ?? 8;
-  const doors = summary?.doors ?? 12;
-  const corridors = summary?.corridors ?? 4;
-  const stairs = summary?.stairs ?? 2;
-  const exits = summary?.exits ?? 2;
-  const ramps = summary?.ramps ?? 1;
+  const rooms = summary ? summary.rooms : 0;
+  const doors = summary ? summary.doors : 0;
+  const corridors = summary ? summary.corridors : 0;
+  const stairs = summary ? summary.stairs : 0;
+  const exits = summary ? summary.exits : 0;
+  const ramps = summary ? summary.ramps : 0;
+  const totalElements = summary ? summary.total_elements : 0;
 
   const cards = [
     { label: 'Rooms', count: rooms, icon: DoorClosed },
@@ -46,7 +47,7 @@ export const BuildingSummary: React.FC<BuildingSummaryProps> = ({
           <h3 className="font-semibold text-white text-xs uppercase tracking-wider">Structural Elements Inventory</h3>
         </div>
         <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-700">
-          {(summary?.total_elements || 29)} Detected Elements
+          {totalElements} Detected Elements
         </span>
       </div>
 

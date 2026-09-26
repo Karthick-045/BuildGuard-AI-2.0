@@ -42,6 +42,12 @@ export const projectApi = {
     return response.data;
   },
 
+  // Get building elements summary and category counts
+  getSummary: async (id: number | string): Promise<BuildingSummary> => {
+    const response = await api.get<BuildingSummary>(`/projects/${id}/summary`);
+    return response.data;
+  },
+
   // Delete project by ID
   deleteProject: async (id: number | string): Promise<{ success: boolean; message: string }> => {
     const response = await api.delete(`/projects/${id}`);

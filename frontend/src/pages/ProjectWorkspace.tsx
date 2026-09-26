@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { 
   Building2, 
@@ -17,7 +17,8 @@ import {
   Sparkles,
   ScanLine,
   ShieldCheck,
-  CheckCheck
+  CheckCheck,
+  ExternalLink
 } from 'lucide-react';
 import { Header } from '../components/layout/Header';
 import { PageContainer } from '../components/layout/PageContainer';
@@ -55,11 +56,30 @@ export const ProjectWorkspace: React.FC = () => {
   const [analyzing, setAnalyzing] = useState(false);
   const [viewMode, setViewMode] = useState<'split' | 'graph' | 'blueprint'>('split');
   const [showUploads, setShowUploads] = useState(false);
+  const [blueprintLoadError, setBlueprintLoadError] = useState(false);
+  const [blueprintReloadKey, setBlueprintReloadKey] = useState(0);
+
+  // Helper to resolve blueprint path to full URL
+  const resolveBlueprintUrl = useCallback((path?: string | null): string => {
+    if (!path) return '/demo/blueprint.svg';
+    if (path.startsWith('http://') || path.startsWith('https://')) return path;
+    const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
+    const backendBase = apiBase.replace(/\/api\/?$/, '');
+    const cleanPath = path.startsWith('/') ? path : `/${path}`;
+    return `${backendBase}${cleanPath}`;
+  }, []);
+
+  const blueprintUrl = useMemo(() => {
+    if (!project?.blueprint_path) return '/demo/blueprint.svg';
+    const base = resolveBlueprintUrl(project.blueprint_path);
+    return `${base}?v=${blueprintReloadKey || project.id}`;
+  }, [project?.blueprint_path, project?.id, blueprintReloadKey, resolveBlueprintUrl]);
 
   // Fetch project data
   const loadWorkspace = useCallback(async () => {
     if (!id) return;
     setLoading(true);
+    setBlueprintLoadError(false);
     try {
       // 1. Fetch project details
       const proj = await projectApi.getProject(id);
@@ -73,8 +93,16 @@ export const ProjectWorkspace: React.FC = () => {
       const g = await projectApi.getGraph(id);
       setGraphData(g);
 
-      // Trigger full AI pipeline if no elements exist yet
-      if (!f || f.length === 0) {
+      // 4. Fetch real structural inventory summary
+      try {
+        const sum = await projectApi.getSummary(id);
+        setSummary(sum);
+      } catch (sumErr) {
+        console.warn('Could not load building summary:', sumErr);
+      }
+
+      // Trigger full AI pipeline ONLY if no findings exist yet and project has no elements
+      if ((!f || f.length === 0) && (!proj.total_elements || proj.total_elements === 0)) {
         const analyzed = await projectApi.analyzeProject(id);
         setSummary(analyzed.summary);
         setFindings(analyzed.findings);
@@ -287,24 +315,79 @@ export const ProjectWorkspace: React.FC = () => {
                 } bg-slate-900/70 border border-slate-800 rounded-xl p-4 shadow-sm flex flex-col justify-between`}
               >
                 <div className="flex items-center justify-between pb-3 border-b border-slate-800/80 mb-3">
-                  <span className="text-xs font-semibold uppercase tracking-wider text-slate-300 flex items-center gap-1.5">
+                  <div className="flex items-center gap-2">
                     <FileText className="w-3.5 h-3.5 text-sky-400" />
-                    Architectural Blueprint & Egress Layout
-                  </span>
-                  <span className="text-[10px] font-mono text-slate-400">Scale: 1/4" = 1'-0"</span>
+                    <span className="text-xs font-semibold uppercase tracking-wider text-slate-300">
+                      Architectural Blueprint & Egress Layout
+                    </span>
+                    {project?.blueprint_path?.includes('voice_blueprint') && (
+                      <span className="px-1.5 py-0.5 rounded text-[9px] font-mono bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                        Voice CAD
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <span className="text-[10px] font-mono text-slate-400 hidden sm:inline">Scale: 1/4" = 1'-0"</span>
+                    <a
+                      href={blueprintUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1 text-[11px] font-medium text-sky-400 hover:text-sky-300 transition-colors"
+                      title="Open full vector CAD plan in a new tab"
+                    >
+                      <span>Full Plan</span>
+                      <ExternalLink className="w-3 h-3" />
+                    </a>
+                  </div>
                 </div>
 
                 <div className="w-full h-[470px] bg-slate-950 rounded-lg overflow-hidden border border-slate-800/80 flex items-center justify-center p-2 relative group">
-                  <img
-                    src={project?.blueprint_path || '/demo/blueprint.svg'}
-                    alt="Floor Plan Blueprint"
-                    className="max-h-full max-w-full object-contain filter drop-shadow-md rounded"
-                    onError={(e) => {
-                      (e.currentTarget as HTMLImageElement).src = '/demo/blueprint.svg';
-                    }}
-                  />
-                  <div className="absolute bottom-2 right-2 bg-slate-900/90 backdrop-blur-sm px-2 py-0.5 rounded border border-slate-800 text-[10px] font-mono text-slate-300">
-                    Vector CAD Model
+                  {blueprintLoadError ? (
+                    <div className="flex flex-col items-center justify-center text-center p-6 space-y-3">
+                      <AlertTriangle className="w-8 h-8 text-amber-400" />
+                      <div>
+                        <p className="text-sm font-semibold text-white">Blueprint Vector Pending</p>
+                        <p className="text-xs text-slate-400 mt-1 max-w-xs">
+                          Could not render the CAD vector drawing directly.
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => {
+                            setBlueprintLoadError(false);
+                            setBlueprintReloadKey((k) => k + 1);
+                          }}
+                          className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-sky-400 text-xs font-medium border border-slate-700 transition-colors flex items-center gap-1.5"
+                        >
+                          <RefreshCw className="w-3 h-3" />
+                          <span>Retry Vector CAD</span>
+                        </button>
+                        <a
+                          href={blueprintUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium border border-slate-700 transition-colors flex items-center gap-1.5"
+                        >
+                          <ExternalLink className="w-3 h-3" />
+                          <span>Direct Link</span>
+                        </a>
+                      </div>
+                    </div>
+                  ) : (
+                    <img
+                      key={blueprintUrl}
+                      src={blueprintUrl}
+                      alt={`${project?.name || 'Building'} Blueprint`}
+                      className="max-h-full max-w-full object-contain filter drop-shadow-md rounded"
+                      onError={() => {
+                        console.warn('Blueprint image load failed from:', blueprintUrl);
+                        setBlueprintLoadError(true);
+                      }}
+                    />
+                  )}
+                  <div className="absolute bottom-2 right-2 bg-slate-900/90 backdrop-blur-sm px-2 py-0.5 rounded border border-slate-800 text-[10px] font-mono text-slate-300 flex items-center gap-1.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                    <span>Vector CAD Model</span>
                   </div>
                 </div>
               </div>

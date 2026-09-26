@@ -7,6 +7,8 @@ from app.models.finding import Finding
 from app.models.building_element import BuildingElement
 from app.models.asset import Asset
 from app.schemas.project import ProjectCreate, ProjectResponse, ProjectListResponse
+from app.schemas.building import BuildingSummaryResponse
+from app.services.blueprint_service import blueprint_service
 
 router = APIRouter(prefix="/projects", tags=["Projects"])
 
@@ -111,11 +113,11 @@ def get_projects(db: Session = Depends(get_db)):
         findings = db.query(Finding).filter(Finding.project_id == p.id).all()
         elements_count = db.query(BuildingElement).filter(BuildingElement.project_id == p.id).count()
         
-        # Check blueprint asset
+        # Check blueprint asset (latest first)
         blueprint_asset = db.query(Asset).filter(
             Asset.project_id == p.id,
             Asset.asset_type == "BLUEPRINT"
-        ).first()
+        ).order_by(Asset.id.desc()).first()
         photos_count = db.query(Asset).filter(
             Asset.project_id == p.id,
             Asset.asset_type == "SITE_PHOTO"
@@ -150,6 +152,20 @@ def get_projects(db: Session = Depends(get_db)):
         projects=project_responses
     )
 
+@router.get("/{project_id}/summary", response_model=BuildingSummaryResponse)
+def get_project_summary(project_id: int, db: Session = Depends(get_db)):
+    """
+    Retrieves building elements summary and category counts (rooms, doors, corridors, stairs, exits, ramps).
+    """
+    project = db.query(Project).filter(Project.id == project_id).first()
+    if not project:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Project with ID {project_id} not found."
+        )
+
+    return blueprint_service.get_summary(project_id, db)
+
 @router.get("/{project_id}", response_model=ProjectResponse)
 def get_project(project_id: int, db: Session = Depends(get_db)):
     """
@@ -167,7 +183,7 @@ def get_project(project_id: int, db: Session = Depends(get_db)):
     blueprint_asset = db.query(Asset).filter(
         Asset.project_id == project_id,
         Asset.asset_type == "BLUEPRINT"
-    ).first()
+    ).order_by(Asset.id.desc()).first()
     photos_count = db.query(Asset).filter(
         Asset.project_id == project_id,
         Asset.asset_type == "SITE_PHOTO"

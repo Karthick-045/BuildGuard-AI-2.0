@@ -11,6 +11,11 @@ class BlueprintService:
         8 Rooms, 12 Doors, 4 Corridors, 2 Stairs, 2 Exits, 1 Ramp.
         Total = 29 elements with bounding boxes and detection confidence.
         """
+        # If project already has elements (e.g. created by voice input), preserve them
+        existing_elements = db.query(BuildingElement).filter(BuildingElement.project_id == project_id).all()
+        if existing_elements and len(existing_elements) > 0:
+            return BlueprintService.get_summary(project_id, db)
+
         # Clear existing elements for this project if any
         db.query(BuildingElement).filter(BuildingElement.project_id == project_id).delete()
 

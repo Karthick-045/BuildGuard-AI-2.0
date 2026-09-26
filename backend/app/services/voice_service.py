@@ -541,6 +541,12 @@ class VoiceService:
         - Dynamic NFPA Life Safety Sensor Schedule Table
         - Official CAD Title Block
         """
+        def xml_escape(val: Any) -> str:
+            if val is None:
+                return ""
+            s = str(val)
+            return s.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;').replace('"', '&quot;')
+
         elements = layout.get("elements", [])
         connections = layout.get("connections", [])
         sensors = layout.get("sensors", [])
@@ -560,6 +566,9 @@ class VoiceService:
 
         canvas_w = 1200
         canvas_h = 800
+
+        p_name_esc = xml_escape(project_name[:32])
+        b_type_esc = xml_escape(building_type.upper())
 
         svg_parts = [
             f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {canvas_w} {canvas_h}" width="{canvas_w}" height="{canvas_h}" style="background-color: #071220; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;">',
@@ -615,11 +624,12 @@ class VoiceService:
         corr_h = 80
         main_corr = corridors[0] if corridors else {"label": "Main Central Corridor"}
         c_label = main_corr.get("label", "Main Central Corridor")
+        c_label_esc = xml_escape(c_label)
 
         svg_parts.extend([
-            f'<!-- Corridor: {c_label} -->',
+            f'<!-- Corridor: {c_label_esc} -->',
             f'<rect x="{plan_x + 10}" y="{corr_y}" width="{plan_w - 20}" height="{corr_h}" fill="rgba(14, 165, 233, 0.08)" stroke="#0284c7" stroke-width="1.5" stroke-dasharray="6,4"/>',
-            f'<text x="{plan_x + 30}" y="{corr_y + 26}" fill="#7dd3fc" font-size="10" font-weight="bold" letter-spacing="1">═ {c_label.upper()} ═</text>',
+            f'<text x="{plan_x + 30}" y="{corr_y + 26}" fill="#7dd3fc" font-size="10" font-weight="bold" letter-spacing="1">═ {c_label_esc.upper()} ═</text>',
             f'<text x="{plan_x + 30}" y="{corr_y + 42}" fill="#0ea5e9" font-size="8">CLEAR EGRESS WIDTH: 72" MINIMUM (IBC § 1020.2)</text>',
             f'<!-- Directional Egress Chevrons -->',
             f'<line x1="{plan_x + 220}" y1="{corr_y + 56}" x2="{plan_x + 360}" y2="{corr_y + 56}" stroke="#10b981" stroke-width="2" marker-end="url(#egressArrow)"/>',
@@ -645,6 +655,8 @@ class VoiceService:
                 rx = plan_x + 20 + idx * slot_w
                 r_lbl = rm.get("label", f"Room {idx+1}")
                 r_id = rm.get("element_id", f"rm_{idx+1}")
+                r_lbl_esc = xml_escape(r_lbl)
+                r_id_esc = xml_escape(r_id)
 
                 dims = rm.get("dimensions", {})
                 w = float(dims.get("width") or 18.0)
@@ -653,22 +665,22 @@ class VoiceService:
                 occ_load = max(2, int(net_area / 20))
 
                 svg_parts.extend([
-                    f'<!-- Room Element: {r_lbl} -->',
+                    f'<!-- Room Element: {r_lbl_esc} -->',
                     f'<rect x="{rx}" y="{ry}" width="{slot_w - 10}" height="{r_height}" fill="rgba(15, 23, 42, 0.6)" stroke="#38bdf8" stroke-width="2" rx="2"/>',
                     f'<rect x="{rx + 3}" y="{ry + 3}" width="{slot_w - 16}" height="{r_height - 6}" fill="none" stroke="#0ea5e9" stroke-width="0.6" stroke-dasharray="2,2"/>',
                     f'<rect x="{rx + 6}" y="{ry + 6}" width="{slot_w - 22}" height="22" fill="#091b33" stroke="#38bdf8" stroke-width="0.8" rx="2"/>',
-                    f'<text x="{rx + (slot_w - 10)/2}" y="{ry + 20}" fill="#f0f9ff" font-size="9" font-weight="bold" text-anchor="middle">{r_lbl.upper()}</text>',
+                    f'<text x="{rx + (slot_w - 10)/2}" y="{ry + 20}" fill="#f0f9ff" font-size="9" font-weight="bold" text-anchor="middle">{r_lbl_esc.upper()}</text>',
                     f'<text x="{rx + 12}" y="{ry + 45}" fill="#94a3b8" font-size="8">DIM: {w:.0f}\'-0" x {l:.0f}\'-0"</text>',
                     f'<text x="{rx + 12}" y="{ry + 58}" fill="#64748b" font-size="7.5">NET AREA: {net_area} SQ FT</text>',
                     f'<text x="{rx + 12}" y="{ry + 71}" fill="#64748b" font-size="7.5">OCC LOAD: {occ_load} PERSONS</text>',
-                    f'<text x="{rx + 12}" y="{ry + 84}" fill="#0ea5e9" font-size="7.5">ID: {r_id}</text>'
+                    f'<text x="{rx + 12}" y="{ry + 84}" fill="#0ea5e9" font-size="7.5">ID: {r_id_esc}</text>'
                 ])
 
                 # Door Swing into corridor
                 door_x = rx + slot_w - 45
                 door_y = ry + r_height if is_top else ry
                 svg_parts.extend([
-                    f'<!-- Door for {r_lbl} -->',
+                    f'<!-- Door for {r_lbl_esc} -->',
                     f'<circle cx="{door_x}" cy="{door_y}" r="2.5" fill="#38bdf8"/>'
                 ])
                 if is_top:
@@ -695,11 +707,11 @@ class VoiceService:
                     sn_y = ry + 120
 
                     svg_parts.extend([
-                        f'<!-- Room Sensor inside {r_lbl} -->',
+                        f'<!-- Room Sensor inside {r_lbl_esc} -->',
                         f'<g transform="translate({sn_x}, {sn_y})">',
                         f'  <circle r="9" fill="#08172c" stroke="{scolor}" stroke-width="1.5"/>',
                         f'  <text x="0" y="3" fill="{scolor}" font-size="8" font-weight="bold" text-anchor="middle">{sletter}</text>',
-                        f'  <text x="0" y="16" fill="#94a3b8" font-size="6.5" text-anchor="middle">{stype[:5]}</text>',
+                        f'  <text x="0" y="16" fill="#94a3b8" font-size="6.5" text-anchor="middle">{xml_escape(stype[:5])}</text>',
                         f'</g>'
                     ])
 
@@ -710,12 +722,13 @@ class VoiceService:
         if stairs:
             st = stairs[0]
             st_lbl = st.get("label", "Emergency Stair 1")
+            st_lbl_esc = xml_escape(st_lbl)
             st_x = plan_x + plan_w - 95
             st_y = plan_y + 30
             svg_parts.extend([
-                f'<!-- Stair: {st_lbl} -->',
+                f'<!-- Stair: {st_lbl_esc} -->',
                 f'<rect x="{st_x}" y="{st_y}" width="80" height="110" fill="#0f1f38" stroke="#f59e0b" stroke-width="1.8" rx="2"/>',
-                f'<text x="{st_x + 40}" y="{st_y + 16}" fill="#fde68a" font-size="7.5" font-weight="bold" text-anchor="middle">{st_lbl.upper()}</text>'
+                f'<text x="{st_x + 40}" y="{st_y + 16}" fill="#fde68a" font-size="7.5" font-weight="bold" text-anchor="middle">{st_lbl_esc.upper()}</text>'
             ])
             for tidx in range(7):
                 ty = st_y + 24 + tidx * 10
@@ -726,12 +739,13 @@ class VoiceService:
         if ramps:
             rp = ramps[0]
             rp_lbl = rp.get("label", "ADA Ramp")
+            rp_lbl_esc = xml_escape(rp_lbl)
             rp_x = plan_x + 15
             rp_y = plan_y + 30
             svg_parts.extend([
-                f'<!-- Ramp: {rp_lbl} -->',
+                f'<!-- Ramp: {rp_lbl_esc} -->',
                 f'<rect x="{rp_x}" y="{rp_y}" width="65" height="100" fill="#0e2a47" stroke="#38bdf8" stroke-width="1.5" rx="2"/>',
-                f'<text x="{rp_x + 32}" y="{rp_y + 16}" fill="#7dd3fc" font-size="7" font-weight="bold" text-anchor="middle">{rp_lbl.upper()}</text>',
+                f'<text x="{rp_x + 32}" y="{rp_y + 16}" fill="#7dd3fc" font-size="7" font-weight="bold" text-anchor="middle">{rp_lbl_esc.upper()}</text>',
                 f'<line x1="{rp_x + 32}" y1="{rp_y + 30}" x2="{rp_x + 32}" y2="{rp_y + 80}" stroke="#38bdf8" stroke-width="1.5" stroke-dasharray="3,3" marker-end="url(#egressArrow)"/>',
                 f'<text x="{rp_x + 32}" y="{rp_y + 92}" fill="#38bdf8" font-size="6.5" font-weight="bold" text-anchor="middle">1:12 ADA</text>'
             ])
@@ -739,6 +753,7 @@ class VoiceService:
         # Draw Emergency Exits
         for e_idx, ex in enumerate(exits[:2]):
             ex_lbl = ex.get("label", f"Exit {e_idx+1}")
+            ex_lbl_esc = xml_escape(ex_lbl)
             if e_idx == 0:
                 ex_x = plan_x + plan_w - 18
                 ex_y = corr_y + 18
@@ -747,13 +762,13 @@ class VoiceService:
                 ex_y = corr_y + 18
 
             svg_parts.extend([
-                f'<!-- Exit: {ex_lbl} -->',
+                f'<!-- Exit: {ex_lbl_esc} -->',
                 f'<g filter="url(#glowGreen)">',
                 f'  <rect x="{ex_x}" y="{ex_y}" width="42" height="42" fill="#064e3b" stroke="#10b981" stroke-width="1.8" rx="3"/>',
                 f'  <text x="{ex_x + 21}" y="{ex_y + 17}" fill="#ffffff" font-size="7" font-weight="bold" text-anchor="middle">EXIT</text>',
                 f'  <text x="{ex_x + 21}" y="{ex_y + 30}" fill="#6ee7b7" font-size="8" font-weight="bold" text-anchor="middle">➔</text>',
                 f'</g>',
-                f'<text x="{ex_x + 21}" y="{ex_y + 54}" fill="#10b981" font-size="7" font-weight="bold" text-anchor="middle">{ex_lbl.upper()}</text>'
+                f'<text x="{ex_x + 21}" y="{ex_y + 54}" fill="#10b981" font-size="7" font-weight="bold" text-anchor="middle">{ex_lbl_esc.upper()}</text>'
             ])
 
         # ----------------- RIGHT VIEWPORT: SPECIFICATION & TABLES -----------------
@@ -783,12 +798,12 @@ class VoiceService:
             lines.append(" ".join(cur_line))
 
         for l_idx, line_txt in enumerate(lines[:4]):
-            escaped = line_txt.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;').replace('"', '&quot;')
+            escaped = xml_escape(line_txt)
             svg_parts.append(f'  <text x="12" y="{52 + l_idx * 13}" fill="#e2e8f0" font-size="7.5" font-style="italic">"{escaped}"</text>')
 
         svg_parts.extend([
             f'  <line x1="8" y1="110" x2="312" y2="110" stroke="#163860" stroke-width="0.8"/>',
-            f'  <text x="10" y="125" fill="#10b981" font-size="7.5" font-weight="bold">✓ CAD REASONING: PARSED {len(rooms)} ROOMS, {len(exits)} EXITS</text>',
+            f'  <text x="10" y="125" fill="#10b981" font-size="7.5" font-weight="bold">&#x2713; CAD REASONING: PARSED {len(rooms)} ROOMS, {len(exits)} EXITS</text>',
             f'  <text x="10" y="140" fill="#7dd3fc" font-size="7">ENGINE: GEMINI 3.5 MULTIMODAL SPATIAL PARSER</text>',
             f'</g>'
         ])
@@ -811,8 +826,8 @@ class VoiceService:
 
         for r_idx, rm in enumerate(rooms[:7]):
             ry_tab = 48 + r_idx * 17
-            rid = rm.get("element_id", f"R-{r_idx+1}")
-            rlbl = rm.get("label", f"Room {r_idx+1}")[:18]
+            rid = xml_escape(rm.get("element_id", f"R-{r_idx+1}"))
+            rlbl = xml_escape(rm.get("label", f"Room {r_idx+1}")[:18])
             dims = rm.get("dimensions", {})
             rw = float(dims.get("width") or 18.0)
             rl = float(dims.get("length") or 24.0)
@@ -848,15 +863,15 @@ class VoiceService:
         for s_idx, sn in enumerate(sensors[:7]):
             sy_tab = 48 + s_idx * 17
             styp = (sn.get("sensor_type") or "SMOKE").upper()
-            stag = sn.get("sensor_id", f"S-{s_idx+1}")[:10]
-            szone = sn.get("element_label", "Building Zone")[:16]
-            sthresh = f"{sn.get('threshold')} {sn.get('unit')}"
+            stag = xml_escape(sn.get("sensor_id", f"S-{s_idx+1}")[:10])
+            szone = xml_escape(sn.get("element_label", "Building Zone")[:16])
+            sthresh = xml_escape(f"{sn.get('threshold')} {sn.get('unit')}")
 
             st_color = "#f43f5e" if "smoke" in styp.lower() else ("#f59e0b" if "temp" in styp.lower() else "#0ea5e9")
 
             svg_parts.extend([
                 f'  <text x="10" y="{sy_tab}" fill="#94a3b8" font-size="6.5">{stag}</text>',
-                f'  <text x="65" y="{sy_tab}" fill="{st_color}" font-size="7" font-weight="bold">{styp[:9]}</text>',
+                f'  <text x="65" y="{sy_tab}" fill="{st_color}" font-size="7" font-weight="bold">{xml_escape(styp[:9])}</text>',
                 f'  <text x="145" y="{sy_tab}" fill="#f1f5f9" font-size="7">{szone}</text>',
                 f'  <text x="260" y="{sy_tab}" fill="#7dd3fc" font-size="7">{sthresh}</text>',
                 f'  <line x1="8" y1="{sy_tab + 4}" x2="312" y2="{sy_tab + 4}" stroke="#0f294a" stroke-width="0.5"/>'
@@ -871,18 +886,33 @@ class VoiceService:
             f'  <rect width="320" height="175" fill="#09182d" stroke="#38bdf8" stroke-width="1.8" rx="3"/>',
             f'  <rect x="0" y="0" width="320" height="24" fill="#0d2b52" stroke="#38bdf8" stroke-width="1"/>',
             f'  <text x="160" y="16" fill="#38bdf8" font-size="10" font-weight="bold" text-anchor="middle" letter-spacing="1.2">FACILITY IDENTIFICATION BLOCK</text>',
-            f'  <text x="14" y="44" fill="#f8fafc" font-size="11" font-weight="bold">PROJECT: {project_name[:32]}</text>',
-            f'  <text x="14" y="62" fill="#94a3b8" font-size="8.5">CLASSIFICATION: IBC GROUP {building_type.upper()} • LEVEL 1</text>',
+            f'  <text x="14" y="44" fill="#f8fafc" font-size="11" font-weight="bold">PROJECT: {p_name_esc}</text>',
+            f'  <text x="14" y="62" fill="#94a3b8" font-size="8.5">CLASSIFICATION: IBC GROUP {b_type_esc} • LEVEL 1</text>',
             f'  <text x="14" y="78" fill="#64748b" font-size="8">CAD DRAWING NO: A-101 // LEVEL 1 EGRESS PLAN</text>',
             f'  <text x="14" y="94" fill="#64748b" font-size="8">SCALE: 1/4" = 1\'-0" // 2D VECTOR SYNTHESIS</text>',
             f'  <line x1="10" y1="104" x2="310" y2="104" stroke="#163860" stroke-width="0.8"/>',
-            f'  <text x="14" y="122" fill="#10b981" font-size="8.5" font-weight="bold">✓ AI CODE AUDIT: VERIFIED & ACTIVE</text>',
+            f'  <text x="14" y="122" fill="#10b981" font-size="8.5" font-weight="bold">&#x2713; AI CODE AUDIT: VERIFIED &amp; ACTIVE</text>',
             f'  <text x="14" y="138" fill="#7dd3fc" font-size="8">COMPLIANCE: IBC CH. 10 (EGRESS) • NFPA 101</text>',
             f'  <text x="14" y="154" fill="#64748b" font-size="7.5">SYNTHESIS ENGINE: BUILDGUARD AI 2.0 CAD ENGINE</text>',
             f'</g>',
             '</svg>'
         ])
 
-        return "\n".join(svg_parts)
+        svg_content = "\n".join(svg_parts)
+
+        # Strictly validate XML well-formedness before saving
+        try:
+            import xml.etree.ElementTree as ET
+            ET.fromstring(svg_content)
+        except Exception as val_err:
+            logger.warning(f"Initial SVG XML validation error: {val_err}. Applying regex ampersand auto-repair...")
+            import re
+            svg_content = re.sub(r'&(?!(?:amp|lt|gt|quot|apos|#\d+|#x[0-9a-fA-F]+);)', '&amp;', svg_content)
+            try:
+                ET.fromstring(svg_content)
+            except Exception as final_err:
+                logger.error(f"Critical: Failed to produce valid SVG XML: {final_err}", exc_info=True)
+
+        return svg_content
 
 voice_service = VoiceService()

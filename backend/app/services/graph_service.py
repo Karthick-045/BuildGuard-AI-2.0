@@ -14,6 +14,11 @@ class GraphService:
         """
         Populates graph_nodes and graph_edges in database for this project.
         """
+        # If project already has custom graph nodes (e.g. from voice synthesis), preserve them
+        existing_nodes = db.query(GraphNode).filter(GraphNode.project_id == project_id).all()
+        if existing_nodes and len(existing_nodes) > 0:
+            return
+
         # Clear existing graph data for project
         db.query(GraphEdge).filter(GraphEdge.project_id == project_id).delete()
         db.query(GraphNode).filter(GraphNode.project_id == project_id).delete()
