@@ -24,7 +24,8 @@ import {
   Activity,
   Flame,
   RotateCcw,
-  LayoutGrid
+  LayoutGrid,
+  Radio
 } from 'lucide-react';
 import { SafetyGraph as SafetyGraphType } from '../../types';
 import { GraphLegend } from './GraphLegend';
@@ -138,8 +139,8 @@ const SafetyNodeComponent = ({ data }: { data: any }) => {
     // 1. Extreme Active Sensor Hazard (Flame / Smoke / Gas alarm)
     if (is_hazard) {
       return {
-        card: 'bg-rose-950/95 border-rose-500 shadow-xl shadow-rose-950/60 ring-2 ring-rose-500/50 text-rose-100',
-        badge: 'bg-rose-600 text-white border-rose-500 font-bold',
+        card: 'bg-rose-950/95 border-2 border-rose-500 shadow-2xl shadow-rose-600/70 ring-4 ring-rose-500/50 text-rose-100 animate-pulse',
+        badge: 'bg-rose-600 text-white border-rose-400 font-bold',
         iconColor: 'text-rose-400',
         textColor: 'text-rose-100 font-semibold',
         icon: Flame,
@@ -245,7 +246,7 @@ const SafetyNodeComponent = ({ data }: { data: any }) => {
 
   return (
     <div
-      className={`px-3.5 py-2.5 rounded-xl border shadow-md backdrop-blur-md transition-all duration-150 min-w-[140px] max-w-[170px] text-center relative cursor-pointer select-none group ${style.card}`}
+      className={`px-3.5 py-2.5 rounded-xl border shadow-md backdrop-blur-md transition-all duration-150 min-w-[140px] max-w-[175px] text-center relative cursor-pointer select-none group ${style.card}`}
     >
       <Handle type="target" position={Position.Top} className="!bg-slate-500 !w-2 !h-2 !border !border-slate-800" />
       <Handle type="target" position={Position.Left} className="!bg-slate-500 !w-2 !h-2 !border !border-slate-800" />
@@ -254,8 +255,8 @@ const SafetyNodeComponent = ({ data }: { data: any }) => {
 
       {/* Floating Badges */}
       {is_hazard && (
-        <span className="absolute -top-3 -right-2 px-1.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider bg-rose-600 text-white flex items-center gap-0.5 shadow-md animate-bounce ring-2 ring-rose-400">
-          🔥 {sensor_reading || hazard_type || 'HAZARD'}
+        <span className="absolute -top-3.5 -right-2 px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider bg-rose-600 text-white flex items-center gap-1 shadow-xl shadow-rose-600/50 animate-bounce ring-2 ring-rose-300 z-20">
+          🔥 SENSOR ALARM: {sensor_reading || hazard_type || 'HAZARD'}
         </span>
       )}
 
@@ -274,6 +275,14 @@ const SafetyNodeComponent = ({ data }: { data: any }) => {
       {is_bottleneck && !is_blocked && !is_affected && !is_hazard && (
         <span className="absolute -top-2.5 -left-2 px-1.5 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider bg-amber-500/20 border border-amber-500/40 text-amber-300">
           BOTTLENECK
+        </span>
+      )}
+
+      {/* Live IoT Sensor Monitored Indicator */}
+      {!is_hazard && !is_blocked && (
+        <span className="absolute -bottom-2 inset-x-2 mx-auto px-1.5 py-0.2 rounded-full text-[8px] font-mono tracking-tight bg-slate-900/95 border border-emerald-500/40 text-emerald-300 flex items-center justify-center gap-1 shadow-sm opacity-90 group-hover:opacity-100">
+          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+          <span>IoT Monitored</span>
         </span>
       )}
 
@@ -520,11 +529,11 @@ export const SafetyGraph: React.FC<SafetyGraphProps> = ({ graphData, projectId, 
           )}
         </div>
 
-        {/* Quick Toolbar: Sparse Layout + Sensor Simulation */}
-        <div className="flex items-center gap-1.5 overflow-x-auto">
+        {/* Quick Toolbar: Sparse Layout + Highlighted IoT Sensor Controls */}
+        <div className="flex items-center gap-2 overflow-x-auto">
           <button
             onClick={handleAutoSpace}
-            className="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-[11px] text-slate-200 border border-slate-700 hover:border-slate-600 flex items-center gap-1.5 transition-all shadow-sm"
+            className="px-2.5 py-1 rounded bg-slate-800/90 hover:bg-slate-700 text-[11px] text-slate-200 border border-slate-700 hover:border-slate-600 flex items-center gap-1.5 transition-all shadow-sm shrink-0"
             title="Rearrange graph into a sparse, expansive non-overlapping architectural layout"
           >
             <LayoutGrid className="w-3 h-3 text-sky-400" />
@@ -532,33 +541,46 @@ export const SafetyGraph: React.FC<SafetyGraphProps> = ({ graphData, projectId, 
           </button>
 
           {projectId && (
-            <>
-              <span className="text-[10px] text-slate-500 shrink-0 font-medium ml-1">Simulate:</span>
-              <button
-                onClick={handleSimulateCorridorSmoke}
-                disabled={actionLoading}
-                className="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-[11px] text-slate-200 border border-slate-700 hover:border-rose-500/40 flex items-center gap-1 transition-all disabled:opacity-50"
-                title="Simulate 85 ppm smoke alarm in Corridor C"
-              >
-                <Flame className="w-3 h-3 text-rose-400" /> Smoke
-              </button>
-              <button
-                onClick={handleSimulateExitBlock}
-                disabled={actionLoading}
-                className="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-[11px] text-slate-200 border border-slate-700 hover:border-amber-500/40 flex items-center gap-1 transition-all disabled:opacity-50"
-                title="Simulate door obstruction on Exit B"
-              >
-                <Ban className="w-3 h-3 text-amber-400" /> Jam Exit
-              </button>
-              <button
-                onClick={handleResetSensors}
-                disabled={actionLoading}
-                className="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-[11px] text-slate-200 border border-slate-700 hover:border-emerald-500/40 flex items-center gap-1 transition-all disabled:opacity-50"
-                title="Reset sensors to normal baseline"
-              >
-                <RotateCcw className="w-3 h-3 text-emerald-400" /> Restore
-              </button>
-            </>
+            <div className="flex items-center gap-1.5 bg-slate-900/90 border border-emerald-500/30 rounded-lg px-2 py-1 shadow-inner shrink-0">
+              <div className="flex items-center gap-1.5 pr-2 border-r border-slate-700">
+                <span className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                </span>
+                <Radio className="w-3 h-3 text-emerald-400" />
+                <span className="text-[10px] font-semibold text-emerald-300 uppercase tracking-wider">IoT Mesh</span>
+              </div>
+
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={handleSimulateCorridorSmoke}
+                  disabled={actionLoading}
+                  className="px-2 py-0.5 rounded bg-rose-500/10 hover:bg-rose-500/20 text-[11px] font-medium text-rose-300 border border-rose-500/30 hover:border-rose-400 flex items-center gap-1 transition-all disabled:opacity-50 active:scale-95"
+                  title="Simulate 85 ppm smoke alarm in Corridor C (triggers dynamic graph recalculation)"
+                >
+                  <Flame className="w-3 h-3 text-rose-400 animate-pulse" />
+                  <span>Smoke Alarm</span>
+                </button>
+                <button
+                  onClick={handleSimulateExitBlock}
+                  disabled={actionLoading}
+                  className="px-2 py-0.5 rounded bg-amber-500/10 hover:bg-amber-500/20 text-[11px] font-medium text-amber-300 border border-amber-500/30 hover:border-amber-400 flex items-center gap-1 transition-all disabled:opacity-50 active:scale-95"
+                  title="Simulate door obstruction on Exit B (forces egress recalculation)"
+                >
+                  <Ban className="w-3 h-3 text-amber-400" />
+                  <span>Jam Exit</span>
+                </button>
+                <button
+                  onClick={handleResetSensors}
+                  disabled={actionLoading}
+                  className="px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-[11px] font-medium text-emerald-300 border border-emerald-500/20 hover:border-emerald-400 flex items-center gap-1 transition-all disabled:opacity-50 active:scale-95"
+                  title="Reset all IoT sensors to normal baselines"
+                >
+                  <RotateCcw className="w-3 h-3 text-emerald-400" />
+                  <span>Reset</span>
+                </button>
+              </div>
+            </div>
           )}
         </div>
       </div>

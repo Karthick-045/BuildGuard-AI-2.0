@@ -361,15 +361,15 @@ export const AgentChatbot: React.FC<AgentChatbotProps> = ({ projectId, projectNa
     setTimeout(() => setCopiedId(null), 2000);
   };
 
-  // Quick prompt suggestions
+  // Quick prompt suggestions with highlighted sensor telemetry & egress navigation
   const quickPrompts = [
-    { label: '🚶 Exit Campus', query: 'I want to go out of this campus', highlight: true },
-    { label: '🚪 Nearest Exit', query: 'What is the nearest emergency exit and safe path?' },
-    { label: '📡 Sensors', query: 'What is the status of the building sensors and telemetry?' },
-    { label: '🔥 Active Alarms', query: 'Are there any fire, smoke, or hazard alarms active right now?' },
-    { label: '🔍 Articulation Points', query: 'Which elements are articulation points in this building?' },
-    { label: '⚠️ Block Exit B', query: 'What happens if Exit B is blocked?' },
-    { label: '📋 8 Checks', query: 'Summarize the 8 safety checks for this project.' },
+    { label: '📡 Live IoT Sensors', query: 'What is the status of the building sensors and telemetry?', theme: 'sensor' },
+    { label: '🚨 Active Alarms', query: 'Are there any fire, smoke, or hazard alarms active right now?', theme: 'hazard' },
+    { label: '🚶 Exit Campus', query: 'I want to go out of this campus', theme: 'egress' },
+    { label: '🚪 Nearest Safe Exit', query: 'What is the nearest emergency exit and safe path?', theme: 'default' },
+    { label: '🔍 Articulation Points', query: 'Which elements are articulation points in this building?', theme: 'default' },
+    { label: '⚠️ Simulate Jammed Exit', query: 'What happens if Exit B is blocked?', theme: 'default' },
+    { label: '📋 Safety Audit', query: 'Summarize the 8 safety checks for this project.', theme: 'default' },
   ];
 
   // Helper to format basic markdown (bold, headers, bullets, code)
@@ -685,20 +685,27 @@ export const AgentChatbot: React.FC<AgentChatbotProps> = ({ projectId, projectNa
                 <span className="text-[10px] font-medium text-slate-400 uppercase tracking-wider shrink-0 flex items-center gap-1">
                   <Zap className="w-2.5 h-2.5 text-amber-400" /> Quick:
                 </span>
-                {quickPrompts.map((p, idx) => (
-                  <button
-                    key={idx}
-                    onClick={() => handleSendMessage(p.query)}
-                    disabled={isLoading}
-                    className={`shrink-0 text-[11px] px-2.5 py-1 rounded-full border transition-all disabled:opacity-50 flex items-center gap-1 ${
-                      p.highlight
-                        ? 'bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border-emerald-500/40 hover:border-emerald-400 font-semibold'
-                        : 'bg-slate-800/80 hover:bg-slate-700/80 text-slate-300 hover:text-white border-slate-700/60 hover:border-slate-500'
-                    }`}
-                  >
-                    {p.label}
-                  </button>
-                ))}
+                {quickPrompts.map((p, idx) => {
+                  let chipClasses = 'bg-slate-800/80 hover:bg-slate-700/80 text-slate-300 hover:text-white border-slate-700/60 hover:border-slate-500';
+                  if (p.theme === 'sensor') {
+                    chipClasses = 'bg-cyan-500/15 hover:bg-cyan-500/25 text-cyan-300 border-cyan-500/40 hover:border-cyan-300 font-semibold shadow-sm';
+                  } else if (p.theme === 'hazard') {
+                    chipClasses = 'bg-rose-500/15 hover:bg-rose-500/25 text-rose-300 border-rose-500/40 hover:border-rose-300 font-semibold shadow-sm animate-pulse';
+                  } else if (p.theme === 'egress') {
+                    chipClasses = 'bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 border-emerald-500/40 hover:border-emerald-300 font-semibold shadow-sm';
+                  }
+
+                  return (
+                    <button
+                      key={idx}
+                      onClick={() => handleSendMessage(p.query)}
+                      disabled={isLoading}
+                      className={`shrink-0 text-[11px] px-2.5 py-1 rounded-full border transition-all disabled:opacity-50 flex items-center gap-1 ${chipClasses}`}
+                    >
+                      {p.label}
+                    </button>
+                  );
+                })}
               </div>
 
               {/* Messages Area */}

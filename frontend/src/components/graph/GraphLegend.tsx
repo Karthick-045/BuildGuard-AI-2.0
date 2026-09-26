@@ -7,7 +7,8 @@ export const GraphLegend: React.FC = () => {
     { label: 'Corridor Spine', dot: 'bg-teal-400 border-teal-300' },
     { label: 'Stair / Ramp', dot: 'bg-amber-400 border-amber-300' },
     { label: 'Emergency Exit', dot: 'bg-emerald-400 border-emerald-300 ring-2 ring-emerald-500/30' },
-    { label: 'Hazard / Blocked', dot: 'bg-rose-500 border-rose-400 animate-pulse' },
+    { label: '📡 IoT Monitored', dot: 'bg-emerald-500 border-emerald-300' },
+    { label: '🔥 Sensor Alarm', dot: 'bg-rose-500 border-rose-400 ring-2 ring-rose-500/50 animate-pulse' },
     { label: 'Egress Route', line: 'w-4 h-0.5 bg-emerald-400' },
   ];
 
