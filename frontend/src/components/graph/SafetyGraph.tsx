@@ -68,25 +68,46 @@ export const computeSparseLayout = (inputNodes: Node[], inputEdges: Edge[]): Nod
     6: [], // Other / Equipment
   };
 
+  const hasMultiFloor = inputNodes.some((n) => n.id.startsWith('GF-')) && inputNodes.some((n) => !n.id.startsWith('GF-') && ((n.data?.type || '').toUpperCase() === 'ROOM'));
+
   inputNodes.forEach((node) => {
     const type = (node.data?.type || '').toUpperCase();
     const lbl = (node.data?.label || '').toLowerCase();
+    const id = node.id;
     const isExitDoor = type === 'DOOR' && (exitDoorIds.has(node.id) || lbl.includes('exit'));
 
-    if (type === 'ROOM') {
-      columns[0].push(node);
-    } else if (isExitDoor) {
-      columns[4].push(node);
-    } else if (type === 'DOOR') {
-      columns[1].push(node);
-    } else if (type === 'CORRIDOR') {
-      columns[2].push(node);
-    } else if (type === 'STAIR' || type === 'RAMP') {
-      columns[3].push(node);
-    } else if (type === 'EXIT') {
-      columns[5].push(node);
+    if (hasMultiFloor) {
+      if (type === 'ROOM' && !id.startsWith('GF-')) {
+        columns[0].push(node); // Tier 0: First Floor Rooms
+      } else if (type === 'CORRIDOR' && !id.startsWith('GF-')) {
+        columns[1].push(node); // Tier 1: First Floor Main Corridor
+      } else if (type === 'STAIR' || type === 'RAMP') {
+        columns[2].push(node); // Tier 2: Staircase
+      } else if (type === 'ROOM' && id.startsWith('GF-')) {
+        columns[3].push(node); // Tier 3: Ground Floor Rooms
+      } else if (type === 'CORRIDOR' && id.startsWith('GF-')) {
+        columns[4].push(node); // Tier 4: Ground Floor Main Corridor
+      } else if (type === 'EXIT' || isExitDoor) {
+        columns[5].push(node); // Tier 5: Final Exit Discharge
+      } else {
+        columns[6].push(node);
+      }
     } else {
-      columns[6].push(node);
+      if (type === 'ROOM') {
+        columns[0].push(node);
+      } else if (isExitDoor) {
+        columns[4].push(node);
+      } else if (type === 'DOOR') {
+        columns[1].push(node);
+      } else if (type === 'CORRIDOR') {
+        columns[2].push(node);
+      } else if (type === 'STAIR' || type === 'RAMP') {
+        columns[3].push(node);
+      } else if (type === 'EXIT') {
+        columns[5].push(node);
+      } else {
+        columns[6].push(node);
+      }
     }
   });
 

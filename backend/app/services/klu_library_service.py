@@ -638,28 +638,36 @@ def import_klu_library_into_db(db: Session) -> Dict[str, Any]:
         )
         db.add(elem)
 
-    # 3. Insert Graph Nodes (Ground Floor, First Floor, and Staircase S1 connector)
+    # 3. Insert Graph Nodes in the exact architectural flow sequence:
+    # First Floor Rooms -> First Floor Corridor -> Staircase -> Ground Floor Rooms -> Ground Floor Corridor -> Exit
     nodes_data = [
-        # Ground Floor Nodes
-        ("GF-R1", "ROOM", "E-Library (Ground Floor)"),
-        ("GF-R2", "ROOM", "Media Resource Centre (Ground Floor)"),
-        ("GF-R3", "ROOM", "Ladies Toilet (Ground Floor)"),
-        ("GF-R4", "ROOM", "Gents Toilet (Ground Floor)"),
-        ("GF-R5", "ROOM", "Book Bank Section (Ground Floor)"),
-        ("GF-R6", "ROOM", "Back Volume / Project Report Section (Ground Floor)"),
-        ("GF-C1", "CORRIDOR", "Main Corridor (Ground Floor)"),
-
-        # First Floor Nodes
+        # Tier 0: First Floor Rooms
         ("R1", "ROOM", "E-Library (First Floor)"),
         ("R2", "ROOM", "Media Resource Centre (First Floor)"),
         ("R3", "ROOM", "Ladies Toilet (First Floor)"),
         ("R4", "ROOM", "Gents Toilet (First Floor)"),
         ("R5", "ROOM", "Book Bank Section (First Floor)"),
         ("R6", "ROOM", "Back Volume / Project Report Section (First Floor)"),
+
+        # Tier 1: First Floor Main Corridor
         ("C1", "CORRIDOR", "Main Corridor (First Floor)"),
 
-        # Shared Vertical Core - Sole connector between floors
-        ("S1", "STAIR", "Main Staircase (Continuous Vertical Core)")
+        # Tier 2: Staircase
+        ("S1", "STAIR", "Main Staircase (Continuous Vertical Core)"),
+
+        # Tier 3: Ground Floor Rooms
+        ("GF-R1", "ROOM", "E-Library (Ground Floor)"),
+        ("GF-R2", "ROOM", "Media Resource Centre (Ground Floor)"),
+        ("GF-R3", "ROOM", "Ladies Toilet (Ground Floor)"),
+        ("GF-R4", "ROOM", "Gents Toilet (Ground Floor)"),
+        ("GF-R5", "ROOM", "Book Bank Section (Ground Floor)"),
+        ("GF-R6", "ROOM", "Back Volume / Project Report Section (Ground Floor)"),
+
+        # Tier 4: Ground Floor Main Corridor
+        ("GF-C1", "CORRIDOR", "Main Corridor (Ground Floor)"),
+
+        # Tier 5: Final Exit Discharge
+        ("E1", "EXIT", "Main Ground Exit / Exterior Discharge")
     ]
 
     for n_key, n_type, n_label in nodes_data:
@@ -671,17 +679,10 @@ def import_klu_library_into_db(db: Session) -> Dict[str, Any]:
         )
         db.add(g_node)
 
-    # 4. Insert Graph Edges: Ground Floor & First Floor connect ONLY through Staircase S1
+    # 4. Insert Graph Edges:
+    # First floor rooms -> First floor main corridor -> Staircase -> Ground floor rooms -> Ground floor main corridor -> Exit
     edges_data = [
-        # --- Ground Floor Room Connections to GF-C1 ---
-        ("GF-R1", "GF-C1", "CONNECTS_TO"),
-        ("GF-R2", "GF-C1", "CONNECTS_TO"),
-        ("GF-R3", "GF-C1", "CONNECTS_TO"),
-        ("GF-R4", "GF-C1", "CONNECTS_TO"),
-        ("GF-R5", "GF-C1", "CONNECTS_TO"),
-        ("GF-R6", "GF-C1", "CONNECTS_TO"),
-
-        # --- First Floor Room Connections to C1 ---
+        # Step 1: First floor rooms -> First floor main corridor
         ("R1", "C1", "CONNECTS_TO"),
         ("R2", "C1", "CONNECTS_TO"),
         ("R3", "C1", "CONNECTS_TO"),
@@ -689,9 +690,27 @@ def import_klu_library_into_db(db: Session) -> Dict[str, Any]:
         ("R5", "C1", "CONNECTS_TO"),
         ("R6", "C1", "CONNECTS_TO"),
 
-        # --- Inter-Floor Connection ONLY Through Staircase S1 ---
+        # Step 2: First floor main corridor -> Staircase
         ("C1", "S1", "LEADS_TO"),
-        ("S1", "GF-C1", "CONNECTS_TO")
+
+        # Step 3: Staircase -> Ground floor rooms
+        ("S1", "GF-R1", "LEADS_TO"),
+        ("S1", "GF-R2", "LEADS_TO"),
+        ("S1", "GF-R3", "LEADS_TO"),
+        ("S1", "GF-R4", "LEADS_TO"),
+        ("S1", "GF-R5", "LEADS_TO"),
+        ("S1", "GF-R6", "LEADS_TO"),
+
+        # Step 4: Ground floor rooms -> Ground floor main corridor
+        ("GF-R1", "GF-C1", "CONNECTS_TO"),
+        ("GF-R2", "GF-C1", "CONNECTS_TO"),
+        ("GF-R3", "GF-C1", "CONNECTS_TO"),
+        ("GF-R4", "GF-C1", "CONNECTS_TO"),
+        ("GF-R5", "GF-C1", "CONNECTS_TO"),
+        ("GF-R6", "GF-C1", "CONNECTS_TO"),
+
+        # Step 5: Ground floor main corridor -> Exit
+        ("GF-C1", "E1", "DISCHARGES_TO")
     ]
 
     for src, tgt, rel in edges_data:
