@@ -69,8 +69,18 @@ class ChatService:
             })
 
         # 3. Safety Graph & Articulation Points
-        # Build live graph representation
-        G = safety_graph_engine.build_demo_graph()
+        # Build live graph representation for current project
+        from app.services.graph_service import graph_service
+        p_graph = graph_service.get_project_graph(project_id, db)
+        if p_graph and len(p_graph.nodes) > 0:
+            G = nx.Graph()
+            for n in p_graph.nodes:
+                G.add_node(n.id, id=n.id, type=n.type, label=n.label, position=n.position)
+            for e in p_graph.edges:
+                G.add_edge(e.source, e.target, relationship=e.relationship)
+        else:
+            G = safety_graph_engine.build_demo_graph()
+
         articulation_node_ids = safety_graph_engine.get_articulation_points(G)
         
         articulation_points = []
@@ -85,6 +95,8 @@ class ChatService:
 
         # Connectivity status
         connectivity_status, affected_rooms, lost_connectivity = safety_graph_engine.check_connectivity(G)
+        room_labels = [data.get("label", n_id) for n_id, data in G.nodes(data=True) if data.get("type") == "ROOM"]
+        exit_labels = [data.get("label", n_id) for n_id, data in G.nodes(data=True) if data.get("type") == "EXIT"]
 
         # 4. Active & Recent Simulation Runs
         recent_sims = (
@@ -193,7 +205,9 @@ class ChatService:
                 "articulation_points": articulation_points,
                 "connectivity_status": connectivity_status,
                 "lost_connectivity": lost_connectivity,
-                "affected_rooms": affected_rooms
+                "affected_rooms": affected_rooms,
+                "room_labels": room_labels,
+                "exit_labels": exit_labels
             },
             "findings_summary": {
                 "total": len(findings),
@@ -229,13 +243,45 @@ class ChatService:
         return None
 
     @classmethod
-    def generate_deterministic_grounded_reply(cls, message: str, context: Dict[str, Any]) -> str:
+    def generate_deterministic_grounded_reply(
+        cls,
+        message: str,
+        context: Dict[str, Any],
+        user_location: Optional[str] = None,
+        gps_coords: Optional[Dict[str, float]] = None,
+        db: Optional[Session] = None
+    ) -> str:
         """
         Intelligent, strictly grounded responses when no external LLM API key
         is configured, using real backend database and graph calculation facts.
         """
         q = message.lower().strip()
-        G = safety_graph_engine.build_demo_graph()
+        
+        # Load active project graph if db is available
+        G = None
+        if db:
+            from app.services.graph_service import graph_service
+            p_graph = graph_service.get_project_graph(context["project"]["id"], db)
+            if p_graph and len(p_graph.nodes) > 0:
+                G = nx.Graph()
+                for n in p_graph.nodes:
+                    G.add_node(n.id, id=n.id, type=n.type, label=n.label, position=n.position)
+                for e in p_graph.edges:
+                    G.add_edge(e.source, e.target, relationship=e.relationship)
+        if not G or len(G.nodes) == 0:
+            G = safety_graph_engine.build_demo_graph()
+
+        # 0. Voice architect / building creation query
+        if any(w in q for w in ["build building", "create building", "generate building", "build a building", "build by voice", "generate blueprint", "voice architect", "voice building"]):
+            return (
+                "### 🏗️ BuildGuard Voice & Architectural Synthesis Engine\n\n"
+                "You can generate building designs and safety graphs directly through this sidebar!\n\n"
+                "- Click on the **Voice Architect** tab above 🎙️.\n"
+                "- Speak or type your building description (e.g. *'Design a 2-story medical clinic with 6 patient rooms, central corridor, and 2 fire exits'*).\n"
+                "- Review the synthesized blueprint, CAD vectors, and topology.\n"
+                "- Click **Synthesize Vector CAD & Safety Graph** to construct the facility and view its live safety graph on the dashboard!"
+            )
+
         sim_result = cls.simulate_query_element(q, G)
 
         # 1. What-if obstruction query
@@ -262,38 +308,108 @@ class ChatService:
                     f"- Alternate paths through secondary corridors or fire stairs remain active."
                 )
 
-        # 1.8. Dynamic Evacuation Route Finder Query
-        if any(w in q for w in ["route", "escape path", "evacuate", "evacuation route", "path from", "how to escape", "dynamic route"]):
-            start_room = "Room A"
-            for r in ["room a", "room b", "room c", "room d", "room e", "room f", "room g", "room h"]:
-                if r in q:
-                    start_room = r.title()
-                    break
+        # 1.8. Dynamic Evacuation & Campus Egress Route Finder Query
+        egress_keywords = [
+            "go out", "exit", "leave", "outside", "campus", "escape", "way out",
+            "get out", "how to exit", "directions to exit", "egress", "evacuate",
+            "route", "escape path", "how to escape", "dynamic route", "navigate out",
+            "find exit", "nearest exit", "evacuation"
+        ]
+        if any(w in q for w in egress_keywords):
+            location_explicit = False
+            start_room = None
             
+            # Check if user_location argument was provided
+            if user_location and user_location.strip():
+                start_room = user_location.strip()
+                location_explicit = True
+            
+            # Check if query directly mentions any room from the current project graph
+            project_rooms = context.get("graph", {}).get("room_labels", [])
+            if not location_explicit and project_rooms:
+                for r_lbl in project_rooms:
+                    if r_lbl.lower() in q:
+                        start_room = r_lbl
+                        location_explicit = True
+                        break
+            
+            # Check against project element labels
+            if not location_explicit:
+                for elem in context.get("elements", []):
+                    if elem.get("type") == "ROOM" and elem.get("label", "").lower() in q:
+                        start_room = elem.get("label")
+                        location_explicit = True
+                        break
+
+            # Fallback regex for common phrasing like "from Room 101" or "at ICU"
+            if not location_explicit:
+                m = re.search(r'(?:from|in|at)\s+([a-zA-Z0-9\s_-]+)', q)
+                if m:
+                    cand = m.group(1).strip()
+                    for r_lbl in project_rooms:
+                        if cand.lower() in r_lbl.lower():
+                            start_room = r_lbl
+                            location_explicit = True
+                            break
+
+            # Avoid asking where user is ("don't use this case maximum")
+            # Default to primary room/entry zone of the active facility graph
+            if not start_room:
+                if project_rooms:
+                    start_room = project_rooms[0]
+                elif context.get("elements"):
+                    room_elems = [e["label"] for e in context["elements"] if e.get("type") == "ROOM"]
+                    start_room = room_elems[0] if room_elems else "Room A"
+                else:
+                    start_room = "Room A"
+
+            # Geolocation GPS telemetry text
+            gps_text = ""
+            if gps_coords and isinstance(gps_coords, dict):
+                lat = gps_coords.get("latitude")
+                lng = gps_coords.get("longitude")
+                if lat is not None and lng is not None:
+                    accuracy = gps_coords.get("accuracy", 12.0)
+                    gps_text = f"📍 **Live Device Geolocation (GPS)**: `{lat:.5f}° N, {lng:.5f}° E` (Position accurate within ±{accuracy:.0f}m)\n"
+
             route_res = route_finder_service.find_dynamic_route(
                 project_id=context["project"]["id"],
                 start_room=start_room,
-                use_sensor_alerts=True
+                use_sensor_alerts=True,
+                db=db
             )
-            
-            res = f"### 🏃 Dynamic Evacuation Route Finder — {route_res['start_room']}\n\n"
-            res += f"- **Target Exit**: **{route_res['target_exit']}**\n"
-            res += f"- **Route Status**: `{route_res['route_status']}`\n"
-            res += f"- **Total Transit Steps**: {route_res['total_steps']}\n"
-            if route_res['hazards_avoided']:
-                res += f"- **Sensor Hazards Avoided**: `{', '.join(route_res['hazards_avoided'])}`\n"
-            
-            res += "\n**Step-by-Step Evacuation Path:**\n"
+
+            res = f"### 🏃 Campus Egress & Safe Navigation Route\n\n"
+            if gps_text:
+                res += gps_text
+            res += f"- **Current Facility**: **{context['project']['name']}**\n"
+            res += f"- **Origin (Start Zone)**: **{route_res['start_room']}**\n"
+            if not location_explicit:
+                res += f"  > *(Note: Defaulting to primary facility entry zone. If you are currently in a different room or wing, tell me your room to recompute immediately!)*\n"
+            res += f"- **Destination (Exterior Safe Egress)**: **{route_res['target_exit']}**\n"
+            res += f"- **Route Status**: `{route_res['route_status']}` | **Transit Length**: {route_res['total_steps']} Segments\n"
+
+            if route_res.get('hazards_avoided'):
+                res += f"- 🛡️ **Sensor Hazard Avoidance Active**: Bypassed `{', '.join(route_res['hazards_avoided'])}` due to active sensor alarms.\n"
+
+            res += "\n**Step-by-Step Navigation Path to Outside:**\n"
             steps = route_res.get("route_steps", [])
             if steps:
-                path_str = " ➔ ".join(f"`{st['label']}`" for st in steps)
-                res += f"{path_str}\n\n"
+                path_icons = []
+                for st in steps:
+                    t = st.get("type", "").upper()
+                    icon = "🚪" if t == "DOOR" else "🚶" if t == "CORRIDOR" else "🪜" if t == "STAIR" else "🏁" if t == "EXIT" else "📍"
+                    path_icons.append(f"{icon} `{st['label']}`")
+                res += " ➔ ".join(path_icons) + "\n\n"
+
                 for i, st in enumerate(steps, 1):
-                    res += f"{i}. **{st['label']}** ({st['type']})\n"
+                    t = st.get("type", "").upper()
+                    icon = "🚪" if t == "DOOR" else "🚶" if t == "CORRIDOR" else "🪜" if t == "STAIR" else "🏁" if t == "EXIT" else "📍"
+                    res += f"{i}. {icon} **{st['label']}** ({st['type']})\n"
             else:
-                res += "⚠️ No viable route found due to surrounding obstructions.\n"
-            
-            res += f"\n> **AI Safety Guidance**: {route_res['ai_guidance']}"
+                res += "⚠️ Unable to establish an unobstructed path from this point to an exterior exit. Check for active sensor alarm closures.\n"
+
+            res += f"\n> 💡 **AI Safety Guidance**: {route_res['ai_guidance']}"
             return res
 
         # 2. IoT Building Safety Sensors & Telemetry
@@ -454,7 +570,12 @@ class ChatService:
         )
 
     @classmethod
-    def build_system_instruction(cls, context: Dict[str, Any]) -> str:
+    def build_system_instruction(
+        cls,
+        context: Dict[str, Any],
+        user_location: Optional[str] = None,
+        gps_coords: Optional[Dict[str, float]] = None
+    ) -> str:
         """
         Creates a prompt containing strict anti-hallucination rules
         and embedding the ground truth project context.
@@ -463,16 +584,33 @@ class ChatService:
         aps = [f"{a['label']} (ID: {a['id']}, Type: {a['type']})" for a in context["graph"]["articulation_points"]]
         findings_summary = context["findings_summary"]
 
+        gps_info_str = "None provided"
+        if gps_coords and isinstance(gps_coords, dict):
+            lat = gps_coords.get("latitude")
+            lng = gps_coords.get("longitude")
+            if lat is not None and lng is not None:
+                gps_info_str = f"{lat:.5f}° N, {lng:.5f}° E (±{gps_coords.get('accuracy', 10):.1f}m)"
+
+        room_labels = context.get('graph', {}).get('room_labels', [])
+        primary_start = room_labels[0] if room_labels else "Room A"
+
         return f"""You are the BuildGuard AI Inspector and Engineering Agent.
 Your job is to provide precise, professional, code-compliant architectural safety and egress intelligence.
 
-CRITICAL ANTI-HALLUCINATION RULES:
+CRITICAL ANTI-HALLUCINATION & NAVIGATION RULES:
 1. Ground every statement STRICTLY in the project facts provided below.
 2. NEVER guess or invent rooms, doors, stairs, or graph edges not present in the ground truth.
 3. The articulation points computed by the graph engine are authoritative: {', '.join(aps) if aps else 'None'}. Do NOT claim other nodes are articulation points unless specified.
 4. When citing safety checks, refer to the 8 checks and exact findings in the database.
 5. If the user asks "what happens if X is blocked", consider whether X is an articulation point (e.g. Exit B, Corridor C, Stair 1) and explain the exact egress isolation impact.
 6. Provide actionable recommendations quoting standard building codes (IBC 2024, ADA Standards, NFPA 101).
+7. CAMPUS EGRESS & EVACUATION NAVIGATION:
+   - When asked "I want to go out of this campus", "how to exit", "directions to outside", or any navigation/route question, provide an immediate, concrete, step-by-step turn-by-turn route to the nearest exterior exit.
+   - User Geolocation (GPS): {gps_info_str}
+   - User Specified Location: {user_location or "Unspecified"}
+   - If user location is unspecified, DO NOT halt to ask where they are. Default to the primary entrance/zone ({primary_start}), note this assumption gently, and present the complete path of doors, corridors, stairs, and exits.
+8. BUILDING CREATION INTENT:
+   - If the user asks to build or design a building, guide them to use the "Voice Architect" tab in this sidebar where they can speak or prompt, preview the synthesized CAD blueprint, and generate it with one click.
 
 GROUND TRUTH BACKEND DATA FOR CURRENT PROJECT:
 - Project Name: {project.get('name', f"Project #{project.get('id')}")} (ID: {project.get('id')})
@@ -483,6 +621,8 @@ GROUND TRUTH BACKEND DATA FOR CURRENT PROJECT:
 - Element Breakdown: {json.dumps(context.get('element_counts', {}))} (Total: {context.get('total_elements', 0)})
 - Graph Nodes: {context.get('graph', {}).get('total_nodes', 0)}, Edges: {context.get('graph', {}).get('total_edges', 0)}
 - Authoritative Articulation Points: {json.dumps(context.get('graph', {}).get('articulation_points', []))}
+- Available Rooms: {json.dumps(room_labels)}
+- Available Exits: {json.dumps(context.get('graph', {}).get('exit_labels', []))}
 - Room Connectivity: {json.dumps(context.get('graph', {}).get('connectivity_status', []))}
 - Audit Findings Summary: {findings_summary.get('total', 0)} total ({findings_summary.get('by_severity', {}).get('CRITICAL', 0)} Critical, {findings_summary.get('by_severity', {}).get('HIGH', 0)} High, {findings_summary.get('by_severity', {}).get('MEDIUM', 0)} Medium, {findings_summary.get('by_severity', {}).get('LOW', 0)} Low)
 - Detailed Findings: {json.dumps(context.get('findings', []))}
@@ -500,7 +640,9 @@ GROUND TRUTH BACKEND DATA FOR CURRENT PROJECT:
         db: Session,
         user_api_key: Optional[str] = None,
         provider: str = "gemini",
-        history: Optional[List[Dict[str, str]]] = None
+        history: Optional[List[Dict[str, str]]] = None,
+        user_location: Optional[str] = None,
+        gps_coords: Optional[Dict[str, float]] = None
     ) -> Dict[str, Any]:
         """
         Coordinates AI Agent response. Uses user-provided key, falling back to server .env key,
@@ -520,7 +662,7 @@ GROUND TRUTH BACKEND DATA FOR CURRENT PROJECT:
 
         # 3. If no API key configured, use deterministic grounded engine
         if not api_key:
-            reply = cls.generate_deterministic_grounded_reply(message, context)
+            reply = cls.generate_deterministic_grounded_reply(message, context, user_location=user_location, gps_coords=gps_coords, db=db)
             return {
                 "success": True,
                 "reply": reply,
@@ -535,7 +677,7 @@ GROUND TRUTH BACKEND DATA FOR CURRENT PROJECT:
             }
 
         # 4. Call external LLM (Gemini or OpenAI)
-        system_instruction = cls.build_system_instruction(context)
+        system_instruction = cls.build_system_instruction(context, user_location=user_location, gps_coords=gps_coords)
 
         if provider_norm == "gemini":
             try:
@@ -613,7 +755,7 @@ GROUND TRUTH BACKEND DATA FOR CURRENT PROJECT:
                     
                     logger.warning(f"Gemini API returned status {resp.status_code}: {resp.text}")
                     # If API error, fallback to grounded response with an alert note
-                    fallback_reply = cls.generate_deterministic_grounded_reply(message, context)
+                    fallback_reply = cls.generate_deterministic_grounded_reply(message, context, user_location=user_location, gps_coords=gps_coords, db=db)
                     return {
                         "success": True,
                         "reply": f"> ⚠️ *Note: Gemini API returned an error ({resp.status_code}). Serving verified response from BuildGuard Real-Data Engine.*\n\n" + fallback_reply,
@@ -629,7 +771,7 @@ GROUND TRUTH BACKEND DATA FOR CURRENT PROJECT:
 
             except Exception as e:
                 logger.error(f"Error calling Gemini API: {e}")
-                fallback_reply = cls.generate_deterministic_grounded_reply(message, context)
+                fallback_reply = cls.generate_deterministic_grounded_reply(message, context, user_location=user_location, gps_coords=gps_coords, db=db)
                 return {
                     "success": True,
                     "reply": f"> ⚠️ *Note: Connection to external LLM timed out or failed. Serving verified response from BuildGuard Real-Data Engine.*\n\n" + fallback_reply,
@@ -687,7 +829,7 @@ GROUND TRUTH BACKEND DATA FOR CURRENT PROJECT:
                         }
                     else:
                         logger.warning(f"OpenAI API returned status {resp.status_code}: {resp.text}")
-                        fallback_reply = cls.generate_deterministic_grounded_reply(message, context)
+                        fallback_reply = cls.generate_deterministic_grounded_reply(message, context, user_location=user_location, gps_coords=gps_coords, db=db)
                         return {
                             "success": True,
                             "reply": f"> ⚠️ *Note: OpenAI API returned an error ({resp.status_code}). Serving verified response from BuildGuard Real-Data Engine.*\n\n" + fallback_reply,
@@ -703,7 +845,7 @@ GROUND TRUTH BACKEND DATA FOR CURRENT PROJECT:
 
             except Exception as e:
                 logger.error(f"Error calling OpenAI API: {e}")
-                fallback_reply = cls.generate_deterministic_grounded_reply(message, context)
+                fallback_reply = cls.generate_deterministic_grounded_reply(message, context, user_location=user_location, gps_coords=gps_coords, db=db)
                 return {
                     "success": True,
                     "reply": f"> ⚠️ *Note: Connection to OpenAI failed. Serving verified response from BuildGuard Real-Data Engine.*\n\n" + fallback_reply,
@@ -718,7 +860,7 @@ GROUND TRUTH BACKEND DATA FOR CURRENT PROJECT:
                 }
 
         # Fallback for unrecognized provider
-        reply = cls.generate_deterministic_grounded_reply(message, context)
+        reply = cls.generate_deterministic_grounded_reply(message, context, user_location=user_location, gps_coords=gps_coords, db=db)
         return {
             "success": True,
             "reply": reply,

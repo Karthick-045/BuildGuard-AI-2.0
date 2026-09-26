@@ -26,6 +26,20 @@ const AppContent: React.FC = () => {
         }
       }).catch(() => {});
     }
+
+    const handleProjectChanged = (e: any) => {
+      if (e.detail?.projectId) {
+        setActiveProjectId(e.detail.projectId);
+        if (e.detail?.projectName) {
+          setActiveProjectName(e.detail.projectName);
+        }
+      }
+    };
+
+    window.addEventListener('buildguard_project_changed', handleProjectChanged as EventListener);
+    return () => {
+      window.removeEventListener('buildguard_project_changed', handleProjectChanged as EventListener);
+    };
   }, [location.pathname]);
 
   return (

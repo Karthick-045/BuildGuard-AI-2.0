@@ -39,7 +39,9 @@ async def chat_with_project_agent(
             db=db,
             user_api_key=payload.api_key,
             provider=payload.provider or "gemini",
-            history=payload.history
+            history=payload.history,
+            user_location=payload.user_location,
+            gps_coords=payload.gps_coords
         )
         return ChatMessageResponse(**result)
     except Exception as e:

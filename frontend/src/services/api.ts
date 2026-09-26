@@ -123,13 +123,17 @@ export const projectApi = {
     message: string,
     apiKey?: string,
     provider: string = "gemini",
-    history: { role: string; content: string }[] = []
+    history: { role: string; content: string }[] = [],
+    userLocation?: string,
+    gpsCoords?: { latitude: number; longitude: number; accuracy?: number }
   ): Promise<ChatResponse> => {
     const response = await api.post<ChatResponse>(`/projects/${projectId}/chat`, {
       message,
       api_key: apiKey || undefined,
       provider,
       history,
+      user_location: userLocation || undefined,
+      gps_coords: gpsCoords || undefined,
     });
     return response.data;
   },

@@ -20,7 +20,6 @@ import { Header } from '../components/layout/Header';
 import { PageContainer } from '../components/layout/PageContainer';
 import { StatCard } from '../components/dashboard/StatCard';
 import { ProjectCard } from '../components/dashboard/ProjectCard';
-import { VoiceBuildingModal } from '../components/voice/VoiceBuildingModal';
 import { SafetyGraph } from '../components/graph/SafetyGraph';
 import { projectApi } from '../services/api';
 import { Project, ProjectListResponse, SafetyGraph as SafetyGraphType } from '../types';
@@ -31,7 +30,6 @@ export const Dashboard: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [seedingDemo, setSeedingDemo] = useState(false);
   const [launchingSensorLab, setLaunchingSensorLab] = useState(false);
-  const [showVoiceModal, setShowVoiceModal] = useState(false);
 
   // Live Dashboard Safety Graph State
   const [selectedProjectId, setSelectedProjectId] = useState<number | null>(null);
@@ -61,6 +59,10 @@ export const Dashboard: React.FC = () => {
       if (targetId) {
         setSelectedProjectId(targetId);
         loadDashboardGraph(targetId);
+        const pObj = res.projects?.find(p => p.id === targetId);
+        window.dispatchEvent(new CustomEvent('buildguard_project_changed', {
+          detail: { projectId: targetId, projectName: pObj?.name }
+        }));
       }
     } catch (err) {
       console.error('Failed to fetch projects', err);
@@ -129,9 +131,9 @@ export const Dashboard: React.FC = () => {
               <span>{launchingSensorLab ? 'Opening Lab...' : 'Sensor Lab'}</span>
             </button>
             <button
-              onClick={() => setShowVoiceModal(true)}
+              onClick={() => window.dispatchEvent(new CustomEvent('open_chatbot_voice_mode'))}
               className="flex items-center space-x-2 px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-slate-200 text-xs font-medium border border-slate-800 hover:border-slate-700 transition-all active:scale-[0.98]"
-              title="Build Safety Graph by speaking building layout"
+              title="Build Safety Graph by speaking building layout in AI Chatbot"
             >
               <Mic className="w-3.5 h-3.5 text-rose-400" />
               <span>Build by Voice</span>
@@ -208,6 +210,10 @@ export const Dashboard: React.FC = () => {
                     const pid = Number(e.target.value);
                     setSelectedProjectId(pid);
                     loadDashboardGraph(pid);
+                    const pObj = data.projects.find(p => p.id === pid);
+                    window.dispatchEvent(new CustomEvent('buildguard_project_changed', {
+                      detail: { projectId: pid, projectName: pObj?.name }
+                    }));
                   }}
                   className="px-3 py-1.5 rounded-lg bg-slate-950 border border-slate-700/80 text-white text-xs font-medium focus:outline-none focus:border-slate-500"
                 >
@@ -300,7 +306,7 @@ export const Dashboard: React.FC = () => {
               </div>
               <div className="flex flex-wrap items-center justify-center gap-2.5 pt-2">
                 <button
-                  onClick={() => setShowVoiceModal(true)}
+                  onClick={() => window.dispatchEvent(new CustomEvent('open_chatbot_voice_mode'))}
                   className="px-3.5 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-medium border border-slate-700 transition-all flex items-center gap-1.5"
                 >
                   <Mic className="w-3.5 h-3.5 text-rose-400" />
@@ -340,12 +346,6 @@ export const Dashboard: React.FC = () => {
           )}
         </div>
       </PageContainer>
-
-      <VoiceBuildingModal
-        isOpen={showVoiceModal}
-        onClose={() => setShowVoiceModal(false)}
-        onProjectCreated={(newId) => fetchProjects(newId)}
-      />
     </div>
   );
 };

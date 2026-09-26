@@ -14,14 +14,10 @@ import {
 } from 'lucide-react';
 import { Header } from '../components/layout/Header';
 import { PageContainer } from '../components/layout/PageContainer';
-import { VoiceBuildingModal } from '../components/voice/VoiceBuildingModal';
 import { projectApi } from '../services/api';
 
 export const NewProject: React.FC = () => {
   const navigate = useNavigate();
-
-  // Voice Building modal state
-  const [showVoiceModal, setShowVoiceModal] = useState(false);
 
   // Form states
   const [name, setName] = useState('');
@@ -114,7 +110,7 @@ export const NewProject: React.FC = () => {
         actions={
           <button
             type="button"
-            onClick={() => setShowVoiceModal(true)}
+            onClick={() => window.dispatchEvent(new CustomEvent('open_chatbot_voice_mode'))}
             className="flex items-center gap-2 px-3.5 py-1.5 rounded-lg bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white text-xs font-semibold shadow-md shadow-indigo-600/30 transition-all active:scale-95 border border-indigo-400/30"
           >
             <Mic className="w-4 h-4 animate-pulse text-indigo-200" />
@@ -137,7 +133,7 @@ export const NewProject: React.FC = () => {
           </div>
           <button
             type="button"
-            onClick={() => setShowVoiceModal(true)}
+            onClick={() => window.dispatchEvent(new CustomEvent('open_chatbot_voice_mode'))}
             className="px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold shrink-0 transition-all shadow-md shadow-indigo-600/25 flex items-center gap-1.5 active:scale-95"
           >
             <Mic className="w-3.5 h-3.5" />
@@ -345,12 +341,6 @@ export const NewProject: React.FC = () => {
           </div>
         </form>
       </PageContainer>
-
-      {/* Voice Building Modal */}
-      <VoiceBuildingModal
-        isOpen={showVoiceModal}
-        onClose={() => setShowVoiceModal(false)}
-      />
     </div>
   );
 };

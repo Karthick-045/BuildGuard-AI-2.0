@@ -27,7 +27,21 @@ class RouteFinderService:
         Calculates dynamic evacuation route from start_room to the nearest viable EXIT,
         automatically avoiding nodes with active sensor hazard alarms.
         """
-        G = safety_graph_engine.build_demo_graph()
+        # Load real project graph from DB if available, fallback to demo graph
+        G = None
+        if db:
+            from app.services.graph_service import graph_service
+            p_graph = graph_service.get_project_graph(project_id, db)
+            if p_graph and len(p_graph.nodes) > 0:
+                G = nx.Graph()
+                for n in p_graph.nodes:
+                    G.add_node(n.id, id=n.id, type=n.type, label=n.label, position=n.position)
+                for e in p_graph.edges:
+                    G.add_edge(e.source, e.target, relationship=e.relationship)
+
+        if not G or len(G.nodes) == 0:
+            G = safety_graph_engine.build_demo_graph()
+
         avoid_nodes = set(avoid_elements or [])
 
         # 1. Inspect live sensor hazard telemetry

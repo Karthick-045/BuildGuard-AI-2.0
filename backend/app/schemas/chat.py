@@ -10,6 +10,8 @@ class ChatMessageRequest(BaseModel):
     api_key: Optional[str] = Field(None, description="Optional user-provided Gemini or OpenAI API key")
     provider: Optional[str] = Field("gemini", description="AI Provider ('gemini' or 'openai')")
     history: Optional[List[Dict[str, str]]] = Field(default=[], description="Recent conversation turns")
+    user_location: Optional[str] = Field(None, description="Optional detected user room or starting location")
+    gps_coords: Optional[Dict[str, float]] = Field(None, description="Optional device GPS coordinates {latitude, longitude}")
 
 class ChatMessageResponse(BaseModel):
     success: bool = True
