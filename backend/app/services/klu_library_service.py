@@ -638,7 +638,7 @@ def import_klu_library_into_db(db: Session) -> Dict[str, Any]:
         )
         db.add(elem)
 
-    # 3. Insert Graph Nodes
+    # 3. Insert Graph Nodes (Ground Floor, First Floor, and Staircase S1 connector)
     nodes_data = [
         # Ground Floor Nodes
         ("GF-R1", "ROOM", "E-Library (Ground Floor)"),
@@ -647,14 +647,7 @@ def import_klu_library_into_db(db: Session) -> Dict[str, Any]:
         ("GF-R4", "ROOM", "Gents Toilet (Ground Floor)"),
         ("GF-R5", "ROOM", "Book Bank Section (Ground Floor)"),
         ("GF-R6", "ROOM", "Back Volume / Project Report Section (Ground Floor)"),
-        ("GF-D1", "DOOR", "Ground Library Glass Door"),
-        ("GF-D2", "DOOR", "Ground Media Centre Door"),
-        ("GF-D3", "DOOR", "Ground Ladies Toilet Door"),
-        ("GF-D4", "DOOR", "Ground Gents Toilet Door"),
-        ("GF-D5", "DOOR", "Ground Book Bank Access Door"),
-        ("GF-D6", "DOOR", "Ground Project Report Section Door"),
         ("GF-C1", "CORRIDOR", "Main Corridor (Ground Floor)"),
-        ("E1", "EXIT", "Ground Exit Terminal / Exterior Discharge"),
 
         # First Floor Nodes
         ("R1", "ROOM", "E-Library (First Floor)"),
@@ -663,15 +656,9 @@ def import_klu_library_into_db(db: Session) -> Dict[str, Any]:
         ("R4", "ROOM", "Gents Toilet (First Floor)"),
         ("R5", "ROOM", "Book Bank Section (First Floor)"),
         ("R6", "ROOM", "Back Volume / Project Report Section (First Floor)"),
-        ("D1", "DOOR", "Main Library Glass Door"),
-        ("D2", "DOOR", "Media Centre Door"),
-        ("D3", "DOOR", "Ladies Toilet Door"),
-        ("D4", "DOOR", "Gents Toilet Door"),
-        ("D5", "DOOR", "Book Bank Access Door"),
-        ("D6", "DOOR", "Project Report Section Door"),
         ("C1", "CORRIDOR", "Main Corridor (First Floor)"),
 
-        # Shared Vertical Core
+        # Shared Vertical Core - Sole connector between floors
         ("S1", "STAIR", "Main Staircase (Continuous Vertical Core)")
     ]
 
@@ -684,55 +671,27 @@ def import_klu_library_into_db(db: Session) -> Dict[str, Any]:
         )
         db.add(g_node)
 
-    # 4. Insert Graph Edges
+    # 4. Insert Graph Edges: Ground Floor & First Floor connect ONLY through Staircase S1
     edges_data = [
-        # --- Ground Floor Edges ---
-        ("GF-R1", "GF-D1", "ACCESS_THROUGH"),
-        ("GF-D1", "GF-C1", "CONNECTS_TO"),
-        ("GF-R2", "GF-D2", "ACCESS_THROUGH"),
-        ("GF-D2", "GF-C1", "CONNECTS_TO"),
-        ("GF-R3", "GF-D3", "ACCESS_THROUGH"),
-        ("GF-D3", "GF-C1", "CONNECTS_TO"),
-        ("GF-R4", "GF-D4", "ACCESS_THROUGH"),
-        ("GF-D4", "GF-C1", "CONNECTS_TO"),
-        ("GF-R5", "GF-D5", "ACCESS_THROUGH"),
-        ("GF-D5", "GF-C1", "CONNECTS_TO"),
-        ("GF-R6", "GF-D6", "ACCESS_THROUGH"),
-        ("GF-D6", "GF-C1", "CONNECTS_TO"),
-        # Ground direct room connections
+        # --- Ground Floor Room Connections to GF-C1 ---
         ("GF-R1", "GF-C1", "CONNECTS_TO"),
         ("GF-R2", "GF-C1", "CONNECTS_TO"),
         ("GF-R3", "GF-C1", "CONNECTS_TO"),
         ("GF-R4", "GF-C1", "CONNECTS_TO"),
         ("GF-R5", "GF-C1", "CONNECTS_TO"),
         ("GF-R6", "GF-C1", "CONNECTS_TO"),
-        # Ground corridor to Exit E1 and Staircase
-        ("GF-C1", "E1", "DISCHARGES_TO"),
-        ("S1", "GF-C1", "DESCENDS_TO"),
-        ("S1", "E1", "ESCAPE_ROUTE_TO"),
 
-        # --- First Floor Edges ---
-        ("R1", "D1", "ACCESS_THROUGH"),
-        ("D1", "C1", "CONNECTS_TO"),
-        ("R2", "D2", "ACCESS_THROUGH"),
-        ("D2", "C1", "CONNECTS_TO"),
-        ("R3", "D3", "ACCESS_THROUGH"),
-        ("D3", "C1", "CONNECTS_TO"),
-        ("R4", "D4", "ACCESS_THROUGH"),
-        ("D4", "C1", "CONNECTS_TO"),
-        ("R5", "D5", "ACCESS_THROUGH"),
-        ("D5", "C1", "CONNECTS_TO"),
-        ("R6", "D6", "ACCESS_THROUGH"),
-        ("D6", "C1", "CONNECTS_TO"),
-        # First floor direct room connections
+        # --- First Floor Room Connections to C1 ---
         ("R1", "C1", "CONNECTS_TO"),
         ("R2", "C1", "CONNECTS_TO"),
         ("R3", "C1", "CONNECTS_TO"),
         ("R4", "C1", "CONNECTS_TO"),
         ("R5", "C1", "CONNECTS_TO"),
         ("R6", "C1", "CONNECTS_TO"),
-        # First floor corridor to Staircase
-        ("C1", "S1", "LEADS_TO")
+
+        # --- Inter-Floor Connection ONLY Through Staircase S1 ---
+        ("C1", "S1", "LEADS_TO"),
+        ("S1", "GF-C1", "CONNECTS_TO")
     ]
 
     for src, tgt, rel in edges_data:
