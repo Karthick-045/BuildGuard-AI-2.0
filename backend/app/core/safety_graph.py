@@ -22,46 +22,46 @@ class SafetyGraphEngine:
 
         # Nodes: (id, type, label, x, y)
         nodes_data = [
-            # 8 Rooms
-            ("room_a", "ROOM", "Room A", 100, 100),
-            ("room_b", "ROOM", "Room B", 100, 220),
-            ("room_c", "ROOM", "Room C", 100, 340),
-            ("room_d", "ROOM", "Room D", 600, 100),
-            ("room_e", "ROOM", "Room E", 600, 220),
-            ("room_f", "ROOM", "Room F", 600, 340),
-            ("room_g", "ROOM", "Room G", 350, 480),
-            ("room_h", "ROOM", "Room H", 500, 480),
+            # 8 Rooms (Column 1: x = 80)
+            ("room_a", "ROOM", "Room A", 80, 80),
+            ("room_b", "ROOM", "Room B", 80, 240),
+            ("room_c", "ROOM", "Room C", 80, 400),
+            ("room_d", "ROOM", "Room D", 80, 600),
+            ("room_e", "ROOM", "Room E", 80, 760),
+            ("room_f", "ROOM", "Room F", 80, 920),
+            ("room_g", "ROOM", "Room G", 80, 1120),
+            ("room_h", "ROOM", "Room H", 80, 1280),
 
-            # 12 Doors
-            ("door_a", "DOOR", "Door A", 220, 100),
-            ("door_b", "DOOR", "Door B", 220, 220),
-            ("door_c", "DOOR", "Door C", 220, 340),
-            ("door_d", "DOOR", "Door D", 720, 100),
-            ("door_e", "DOOR", "Door E", 720, 220),
-            ("door_f", "DOOR", "Door F", 720, 340),
-            ("door_g", "DOOR", "Door G", 350, 400),
-            ("door_h", "DOOR", "Door H", 500, 400),
-            ("door_exit_a", "DOOR", "Exit Door A", 850, 260),
-            ("door_exit_b", "DOOR", "Exit Door B", 220, 480),
-            ("door_sec_1", "DOOR", "Fire Door 1", 380, 220),
-            ("door_sec_2", "DOOR", "Fire Door 2", 500, 220),
+            # 12 Doors (Column 2: Interior Doors x = 420; Column 4: Exit Doors x = 1500)
+            ("door_a", "DOOR", "Door A", 420, 80),
+            ("door_b", "DOOR", "Door B", 420, 240),
+            ("door_c", "DOOR", "Door C", 420, 400),
+            ("door_d", "DOOR", "Door D", 420, 600),
+            ("door_e", "DOOR", "Door E", 420, 760),
+            ("door_f", "DOOR", "Door F", 420, 920),
+            ("door_g", "DOOR", "Door G", 420, 1120),
+            ("door_h", "DOOR", "Door H", 420, 1280),
+            ("door_exit_a", "DOOR", "Exit Door A", 1500, 760),
+            ("door_exit_b", "DOOR", "Exit Door B", 1500, 240),
+            ("door_sec_1", "DOOR", "Fire Door 1", 1140, 920),
+            ("door_sec_2", "DOOR", "Fire Door 2", 1140, 1360),
 
-            # 4 Corridors
-            ("corridor_c", "CORRIDOR", "Corridor C", 300, 220),
-            ("corridor_west", "CORRIDOR", "Corridor West", 720, 220),
-            ("corridor_east", "CORRIDOR", "Corridor East", 420, 340),
-            ("main_hallway", "CORRIDOR", "Main Hallway", 450, 150),
+            # 4 Corridors (Column 3: x = 780)
+            ("corridor_c", "CORRIDOR", "Corridor C", 780, 240),
+            ("corridor_west", "CORRIDOR", "Corridor West", 780, 760),
+            ("corridor_east", "CORRIDOR", "Corridor East", 780, 1200),
+            ("main_hallway", "CORRIDOR", "Main Hallway", 1140, 760),
 
-            # 2 Stairs
-            ("stair_1", "STAIR", "Stair 1", 220, 410),
-            ("stair_2", "STAIR", "Stair 2", 580, 150),
+            # 2 Stairs (Column 4: Intermediate Transit x = 1140)
+            ("stair_1", "STAIR", "Stair 1", 1140, 240),
+            ("stair_2", "STAIR", "Stair 2", 1140, 600),
 
-            # 1 Ramp
-            ("ramp_1", "RAMP", "Ramp 1", 420, 420),
+            # 1 Ramp (Column 4: ADA Transit x = 1140)
+            ("ramp_1", "RAMP", "Ramp 1", 1140, 1080),
 
-            # 2 Exits
-            ("exit_a", "EXIT", "Exit A", 950, 260),
-            ("exit_b", "EXIT", "Exit B", 120, 480),
+            # 2 Exits (Column 5: Final Exits x = 1860)
+            ("exit_a", "EXIT", "Exit A", 1860, 760),
+            ("exit_b", "EXIT", "Exit B", 1860, 240),
         ]
 
         for n_id, n_type, n_label, x, y in nodes_data:

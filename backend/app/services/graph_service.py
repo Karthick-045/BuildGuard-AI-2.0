@@ -72,34 +72,33 @@ class GraphService:
                 elem = db_elements.get(n.label) or db_elements.get(n.node_key)
                 ntype = (n.node_type or "ROOM").upper()
 
-                if elem and elem.x and elem.y and (elem.x != 100 or elem.y != 100):
-                    pos = {"x": elem.x, "y": elem.y}
-                else:
-                    if ntype == "ROOM":
-                        col = room_idx % 2
-                        row = room_idx // 2
-                        pos = {"x": 100 if col == 0 else 240, "y": 100 + row * 130}
-                        room_idx += 1
-                    elif ntype == "DOOR":
-                        col = door_idx % 2
-                        row = door_idx // 2
-                        pos = {"x": 360 if col == 0 else 460, "y": 100 + row * 110}
-                        door_idx += 1
-                    elif ntype == "CORRIDOR":
-                        pos = {"x": 580, "y": 130 + corr_idx * 140}
-                        corr_idx += 1
-                    elif ntype in ["STAIR", "RAMP"]:
-                        pos = {"x": 720, "y": 160 + (stair_idx + ramp_idx) * 130}
-                        if ntype == "STAIR":
-                            stair_idx += 1
-                        else:
-                            ramp_idx += 1
-                    elif ntype == "EXIT":
-                        pos = {"x": 880, "y": 180 + exit_idx * 160}
-                        exit_idx += 1
+                # Use sparse tiered column positions for clear, non-overlapping architectural layout
+                lbl_lower = (n.label or n.node_key or "").lower()
+                is_exit_door = "exit" in lbl_lower and ntype == "DOOR"
+
+                if ntype == "ROOM":
+                    pos = {"x": 80, "y": 80 + room_idx * 160}
+                    room_idx += 1
+                elif is_exit_door:
+                    pos = {"x": 1500, "y": 120 + exit_idx * 180}
+                elif ntype == "DOOR":
+                    pos = {"x": 420, "y": 80 + door_idx * 160}
+                    door_idx += 1
+                elif ntype == "CORRIDOR":
+                    pos = {"x": 780, "y": 120 + corr_idx * 180}
+                    corr_idx += 1
+                elif ntype in ["STAIR", "RAMP"]:
+                    pos = {"x": 1140, "y": 140 + (stair_idx + ramp_idx) * 180}
+                    if ntype == "STAIR":
+                        stair_idx += 1
                     else:
-                        pos = {"x": 400 + (other_idx % 3) * 150, "y": 450 + (other_idx // 3) * 100}
-                        other_idx += 1
+                        ramp_idx += 1
+                elif ntype == "EXIT":
+                    pos = {"x": 1860, "y": 140 + exit_idx * 200}
+                    exit_idx += 1
+                else:
+                    pos = {"x": 1140, "y": 300 + other_idx * 160}
+                    other_idx += 1
 
                 G.add_node(
                     n.node_key,

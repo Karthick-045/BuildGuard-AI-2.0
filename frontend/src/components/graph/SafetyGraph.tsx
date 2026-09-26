@@ -1,4 +1,4 @@
-import React, { useMemo, useCallback } from 'react';
+import React, { useMemo, useCallback, useState, useEffect } from 'react';
 import ReactFlow, {
   Background,
   Controls,
@@ -23,7 +23,8 @@ import {
   Ban,
   Activity,
   Flame,
-  RotateCcw
+  RotateCcw,
+  LayoutGrid
 } from 'lucide-react';
 import { SafetyGraph as SafetyGraphType } from '../../types';
 import { GraphLegend } from './GraphLegend';
@@ -38,82 +39,218 @@ interface SafetyGraphProps {
   onAlertTriggered?: (alert: SensorAlertInfo) => void;
 }
 
-// Custom Node Component
+/**
+ * Normalizes graph nodes into spacious, non-overlapping architectural tiers
+ * with generous horizontal channels (340px-360px) and 160px vertical pitch.
+ */
+export const computeSparseLayout = (inputNodes: Node[], inputEdges: Edge[]): Node[] => {
+  if (!inputNodes || inputNodes.length === 0) return [];
+
+  // Identify exit nodes and exit doors
+  const exitNodeIds = new Set(
+    inputNodes.filter((n) => (n.data?.type || '').toUpperCase() === 'EXIT').map((n) => n.id)
+  );
+
+  const exitDoorIds = new Set<string>();
+  inputEdges.forEach((e) => {
+    if (exitNodeIds.has(e.target)) exitDoorIds.add(e.source);
+    if (exitNodeIds.has(e.source)) exitDoorIds.add(e.target);
+  });
+
+  const columns: { [key: number]: Node[] } = {
+    0: [], // Rooms (Origin Compartments)
+    1: [], // Interior Doors
+    2: [], // Circulation Spines & Corridors
+    3: [], // Stairs & ADA Ramps
+    4: [], // Exit Doors
+    5: [], // Final Emergency Exits
+    6: [], // Other / Equipment
+  };
+
+  inputNodes.forEach((node) => {
+    const type = (node.data?.type || '').toUpperCase();
+    const lbl = (node.data?.label || '').toLowerCase();
+    const isExitDoor = type === 'DOOR' && (exitDoorIds.has(node.id) || lbl.includes('exit'));
+
+    if (type === 'ROOM') {
+      columns[0].push(node);
+    } else if (isExitDoor) {
+      columns[4].push(node);
+    } else if (type === 'DOOR') {
+      columns[1].push(node);
+    } else if (type === 'CORRIDOR') {
+      columns[2].push(node);
+    } else if (type === 'STAIR' || type === 'RAMP') {
+      columns[3].push(node);
+    } else if (type === 'EXIT') {
+      columns[5].push(node);
+    } else {
+      columns[6].push(node);
+    }
+  });
+
+  const tierX: { [key: number]: number } = {
+    0: 80,
+    1: 440,
+    2: 800,
+    3: 1160,
+    4: 1520,
+    5: 1880,
+    6: 1160,
+  };
+
+  const VERTICAL_GAP = 160;
+  const TOP_PADDING = 80;
+
+  const maxRows = Math.max(...Object.values(columns).map((c) => c.length), 1);
+  const totalHeight = maxRows * VERTICAL_GAP;
+
+  const resultNodes: Node[] = [];
+
+  Object.entries(columns).forEach(([tierStr, colNodes]) => {
+    const tier = Number(tierStr);
+    const count = colNodes.length;
+    if (count === 0) return;
+
+    const colHeight = count * VERTICAL_GAP;
+    // Vertically center smaller columns relative to the tallest column
+    const startY = TOP_PADDING + Math.max(0, (totalHeight - colHeight) / 2);
+
+    colNodes.forEach((node, index) => {
+      resultNodes.push({
+        ...node,
+        position: {
+          x: tierX[tier] || 80,
+          y: startY + index * VERTICAL_GAP,
+        },
+      });
+    });
+  });
+
+  return resultNodes;
+};
+
+// Custom Node Component with Harmonious Architectural Color Palette
 const SafetyNodeComponent = ({ data }: { data: any }) => {
   const { label, type, is_blocked, is_affected, is_bottleneck, is_hazard, hazard_type, sensor_reading } = data;
 
-  const getTypeStyle = () => {
+  const getStyle = () => {
+    // 1. Extreme Active Sensor Hazard (Flame / Smoke / Gas alarm)
+    if (is_hazard) {
+      return {
+        card: 'bg-rose-950/95 border-rose-500 shadow-xl shadow-rose-950/60 ring-2 ring-rose-500/50 text-rose-100',
+        badge: 'bg-rose-600 text-white border-rose-500 font-bold',
+        iconColor: 'text-rose-400',
+        textColor: 'text-rose-100 font-semibold',
+        icon: Flame,
+      };
+    }
+
+    // 2. Direct Egress Blockage (Jammed fire door / collapsed path)
+    if (is_blocked) {
+      return {
+        card: 'bg-rose-950/90 border-rose-500 text-rose-200 shadow-lg shadow-rose-950/40 ring-1 ring-rose-500/30',
+        badge: 'bg-rose-700 text-white border-rose-600 font-bold',
+        iconColor: 'text-rose-400',
+        textColor: 'text-rose-100 font-semibold',
+        icon: Ban,
+      };
+    }
+
+    // 3. Isolated / Trapped Room (No viable route to any exit)
+    if (is_affected) {
+      return {
+        card: 'bg-slate-900/95 border-rose-500/80 text-rose-200 shadow-md shadow-rose-950/30',
+        badge: 'bg-rose-950 text-rose-300 border-rose-700/80 font-semibold',
+        iconColor: 'text-rose-400',
+        textColor: 'text-rose-200 font-medium',
+        icon: AlertTriangle,
+      };
+    }
+
+    // 4. Bottleneck warning
+    if (is_bottleneck) {
+      return {
+        card: 'bg-slate-900/95 border-amber-600/70 text-amber-200 shadow-md shadow-amber-950/20',
+        badge: 'bg-amber-950/70 text-amber-300 border-amber-800/80 font-semibold',
+        iconColor: 'text-amber-400',
+        textColor: 'text-amber-100 font-medium',
+        icon: GitFork,
+      };
+    }
+
+    // 5. Architectural Baseline Types:
     switch (type) {
       case 'ROOM':
         return {
-          border: is_hazard ? 'border-rose-500 ring-2 ring-rose-500/40' : 'border-sky-500/80',
-          bg: is_hazard ? 'bg-rose-950/90' : (is_affected ? 'bg-rose-950/90 border-rose-500 shadow-rose-500/30' : 'bg-slate-900/90 shadow-sky-500/10'),
-          text: is_hazard ? 'text-rose-300' : (is_affected ? 'text-rose-200' : 'text-sky-300'),
-          badge: is_hazard ? 'bg-rose-600 text-white' : (is_affected ? 'bg-rose-500 text-white' : 'bg-sky-500/20 text-sky-400 border-sky-500/30'),
+          card: 'bg-slate-900/95 border-slate-700/80 hover:border-slate-500 hover:shadow-lg hover:shadow-slate-800/30',
+          badge: 'bg-slate-800/90 text-slate-300 border-slate-700',
+          iconColor: 'text-slate-400',
+          textColor: 'text-slate-100 font-medium',
           icon: DoorClosed,
         };
       case 'DOOR':
         return {
-          border: is_hazard ? 'border-rose-500 ring-2 ring-rose-500/40' : 'border-indigo-500/60',
-          bg: is_hazard ? 'bg-rose-950/90' : 'bg-slate-900/90 shadow-indigo-500/10',
-          text: is_hazard ? 'text-rose-300' : 'text-indigo-300',
-          badge: is_hazard ? 'bg-rose-600 text-white' : 'bg-indigo-500/20 text-indigo-400 border-indigo-500/30',
+          card: 'bg-slate-900/95 border-slate-700/70 hover:border-slate-500 hover:shadow-md hover:shadow-slate-800/20',
+          badge: 'bg-slate-800/80 text-slate-400 border-slate-700/60',
+          iconColor: 'text-slate-400',
+          textColor: 'text-slate-200 font-medium',
           icon: DoorOpen,
         };
       case 'CORRIDOR':
         return {
-          border: (is_blocked || is_hazard) ? 'border-rose-500 ring-4 ring-rose-500/30 animate-pulse' : 'border-cyan-500/80',
-          bg: (is_blocked || is_hazard) ? 'bg-rose-950/90' : 'bg-slate-900/90 shadow-cyan-500/10',
-          text: (is_blocked || is_hazard) ? 'text-rose-200' : 'text-cyan-300',
-          badge: (is_blocked || is_hazard) ? 'bg-rose-600 text-white' : 'bg-cyan-500/20 text-cyan-400 border-cyan-500/30',
+          card: 'bg-slate-900/95 border-teal-800/60 hover:border-teal-600/80 hover:shadow-teal-950/30',
+          badge: 'bg-teal-950/70 text-teal-300 border-teal-800/60',
+          iconColor: 'text-teal-400',
+          textColor: 'text-teal-100 font-medium',
           icon: GitFork,
         };
       case 'STAIR':
         return {
-          border: (is_blocked || is_hazard) ? 'border-rose-500 ring-4 ring-rose-500/30 animate-pulse' : 'border-amber-500/80',
-          bg: (is_blocked || is_hazard) ? 'bg-rose-950/90' : 'bg-slate-900/90 shadow-amber-500/10',
-          text: (is_blocked || is_hazard) ? 'text-rose-200' : 'text-amber-300',
-          badge: (is_blocked || is_hazard) ? 'bg-rose-600 text-white' : 'bg-amber-500/20 text-amber-400 border-amber-500/30',
+          card: 'bg-slate-900/95 border-amber-800/60 hover:border-amber-600/80 hover:shadow-amber-950/30',
+          badge: 'bg-amber-950/70 text-amber-300 border-amber-800/60',
+          iconColor: 'text-amber-400',
+          textColor: 'text-amber-100 font-medium',
           icon: ArrowUpRight,
         };
       case 'RAMP':
         return {
-          border: is_hazard ? 'border-rose-500 ring-2 ring-rose-500/40' : 'border-purple-500/80',
-          bg: is_hazard ? 'bg-rose-950/90' : 'bg-slate-900/90 shadow-purple-500/10',
-          text: is_hazard ? 'text-rose-300' : 'text-purple-300',
-          badge: is_hazard ? 'bg-rose-600 text-white' : 'bg-purple-500/20 text-purple-400 border-purple-500/30',
+          card: 'bg-slate-900/95 border-amber-800/60 hover:border-amber-600/80 hover:shadow-amber-950/30',
+          badge: 'bg-amber-950/70 text-amber-300 border-amber-800/60',
+          iconColor: 'text-amber-400',
+          textColor: 'text-amber-100 font-medium',
           icon: Accessibility,
         };
       case 'EXIT':
         return {
-          border: (is_blocked || is_hazard) ? 'border-rose-600 ring-4 ring-rose-600/40 shadow-rose-500/50 animate-pulse' : 'border-emerald-500 shadow-emerald-500/20',
-          bg: (is_blocked || is_hazard) ? 'bg-rose-950/95' : 'bg-emerald-950/80',
-          text: (is_blocked || is_hazard) ? 'text-rose-300' : 'text-emerald-300',
-          badge: (is_blocked || is_hazard) ? 'bg-rose-600 text-white' : 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30',
+          card: 'bg-emerald-950/50 border-2 border-emerald-500 hover:border-emerald-400 shadow-xl shadow-emerald-950/50',
+          badge: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40 font-bold',
+          iconColor: 'text-emerald-400',
+          textColor: 'text-emerald-100 font-bold',
           icon: LogOut,
         };
       default:
         return {
-          border: 'border-slate-600',
-          bg: 'bg-slate-900/90',
-          text: 'text-slate-300',
+          card: 'bg-slate-900/95 border-slate-700/70 hover:border-slate-500',
           badge: 'bg-slate-800 text-slate-400 border-slate-700',
+          iconColor: 'text-slate-400',
+          textColor: 'text-slate-200',
           icon: DoorClosed,
         };
     }
   };
 
-  const style = getTypeStyle();
+  const style = getStyle();
   const Icon = style.icon;
 
   return (
     <div
-      className={`px-3 py-2 rounded-xl border-2 shadow-lg backdrop-blur-sm transition-all min-w-[125px] text-center relative ${style.border} ${style.bg}`}
+      className={`px-3.5 py-2.5 rounded-xl border shadow-md backdrop-blur-md transition-all duration-150 min-w-[140px] max-w-[170px] text-center relative cursor-pointer select-none group ${style.card}`}
     >
-      <Handle type="target" position={Position.Top} className="!bg-slate-400 !w-2 !h-2" />
-      <Handle type="target" position={Position.Left} className="!bg-slate-400 !w-2 !h-2" />
-      <Handle type="source" position={Position.Right} className="!bg-slate-400 !w-2 !h-2" />
-      <Handle type="source" position={Position.Bottom} className="!bg-slate-400 !w-2 !h-2" />
+      <Handle type="target" position={Position.Top} className="!bg-slate-500 !w-2 !h-2 !border !border-slate-800" />
+      <Handle type="target" position={Position.Left} className="!bg-slate-500 !w-2 !h-2 !border !border-slate-800" />
+      <Handle type="source" position={Position.Right} className="!bg-slate-500 !w-2 !h-2 !border !border-slate-800" />
+      <Handle type="source" position={Position.Bottom} className="!bg-slate-500 !w-2 !h-2 !border !border-slate-800" />
 
       {/* Floating Badges */}
       {is_hazard && (
@@ -140,15 +277,15 @@ const SafetyNodeComponent = ({ data }: { data: any }) => {
         </span>
       )}
 
-      <div className="flex items-center justify-center space-x-1.5 mb-1">
-        <Icon className={`w-3.5 h-3.5 ${style.text}`} />
-        <span className="text-xs font-bold text-white tracking-wide truncate max-w-[130px]">
+      <div className="flex items-center justify-center space-x-1.5 mb-1.5">
+        <Icon className={`w-3.5 h-3.5 shrink-0 ${style.iconColor}`} />
+        <span className={`text-xs tracking-wide truncate ${style.textColor}`}>
           {label}
         </span>
       </div>
 
       <div className="flex justify-center">
-        <span className={`text-[10px] px-1.5 py-0.2 rounded border font-semibold uppercase ${style.badge}`}>
+        <span className={`text-[10px] px-2 py-0.5 rounded-full border uppercase tracking-wider ${style.badge}`}>
           {type}
         </span>
       </div>
@@ -243,11 +380,42 @@ export const SafetyGraph: React.FC<SafetyGraphProps> = ({ graphData, projectId, 
     }
   };
 
-  // Transform backend graph nodes into React Flow Nodes
+  // Transform backend graph edges into React Flow Edges with architectural styling
+  const initialEdges: Edge[] = useMemo(() => {
+    if (!graphData?.edges) return [];
+
+    return graphData.edges.map((e, index) => {
+      const isAffected = e.is_affected;
+      const isEgress = e.is_egress;
+      return {
+        id: `e-${e.source}-${e.target}-${index}`,
+        source: e.source,
+        target: e.target,
+        type: 'smoothstep',
+        animated: isEgress,
+        style: {
+          stroke: isAffected ? '#f43f5e' : (isEgress ? '#10b981' : '#475569'),
+          strokeWidth: isAffected ? 2 : (isEgress ? 2.5 : 1.5),
+          strokeDasharray: isAffected ? '5,5' : undefined,
+        },
+        markerEnd: {
+          type: MarkerType.ArrowClosed,
+          color: isAffected ? '#f43f5e' : (isEgress ? '#10b981' : '#475569'),
+          width: 14,
+          height: 14,
+        },
+        label: e.relationship !== 'CONNECTS_TO' ? e.relationship : undefined,
+        labelStyle: { fill: isEgress ? '#34d399' : '#94a3b8', fontSize: 9, fontWeight: 500 },
+        labelBgStyle: { fill: '#0a0f1d', fillOpacity: 0.85 },
+      };
+    });
+  }, [graphData]);
+
+  // Transform backend graph nodes into React Flow Nodes with Sparse Layout Normalization
   const initialNodes: Node[] = useMemo(() => {
     if (!graphData?.nodes) return [];
 
-    return graphData.nodes.map((n) => ({
+    const rawNodes: Node[] = graphData.nodes.map((n) => ({
       id: n.id,
       type: 'safetyNode',
       position: n.position || { x: 100, y: 100 },
@@ -265,46 +433,36 @@ export const SafetyGraph: React.FC<SafetyGraphProps> = ({ graphData, projectId, 
         hazard_message: n.hazard_message,
       },
     }));
-  }, [graphData]);
 
-  // Transform backend graph edges into React Flow Edges
-  const initialEdges: Edge[] = useMemo(() => {
-    if (!graphData?.edges) return [];
+    // Detect if nodes are too close to each other (e.g. CAD room coords or compressed layout)
+    const hasDenseOverlap = rawNodes.some((n1, i) =>
+      rawNodes.some((n2, j) => {
+        if (i >= j) return false;
+        const dx = Math.abs(n1.position.x - n2.position.x);
+        const dy = Math.abs(n1.position.y - n2.position.y);
+        return dx < 240 && dy < 120;
+      })
+    );
 
-    return graphData.edges.map((e, index) => {
-      const isAffected = e.is_affected;
-      const isEgress = e.is_egress;
-      return {
-        id: `e-${e.source}-${e.target}-${index}`,
-        source: e.source,
-        target: e.target,
-        animated: isEgress || !isAffected,
-        style: {
-          stroke: isAffected ? '#f43f5e' : (isEgress ? '#10b981' : '#38bdf8'),
-          strokeWidth: isAffected ? 3 : (isEgress ? 3 : 2),
-          strokeDasharray: isAffected ? '4,4' : undefined,
-        },
-        markerEnd: {
-          type: MarkerType.ArrowClosed,
-          color: isAffected ? '#f43f5e' : (isEgress ? '#10b981' : '#38bdf8'),
-          width: 16,
-          height: 16,
-        },
-        label: e.relationship !== 'CONNECTS_TO' ? e.relationship : undefined,
-        labelStyle: { fill: isEgress ? '#34d399' : '#94a3b8', fontSize: 9, fontWeight: 600 },
-        labelBgStyle: { fill: '#0f172a', fillOpacity: 0.8 },
-      };
-    });
-  }, [graphData]);
+    if (hasDenseOverlap) {
+      return computeSparseLayout(rawNodes, initialEdges);
+    }
+
+    return rawNodes;
+  }, [graphData, initialEdges]);
 
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
 
   // Sync state whenever graphData updates
-  React.useEffect(() => {
+  useEffect(() => {
     setNodes(initialNodes);
     setEdges(initialEdges);
   }, [initialNodes, initialEdges, setNodes, setEdges]);
+
+  const handleAutoSpace = useCallback(() => {
+    setNodes((currentNodes) => computeSparseLayout(currentNodes, edges));
+  }, [edges, setNodes]);
 
   const handleNodeClick = useCallback(
     (_: React.MouseEvent, node: Node) => {
@@ -331,20 +489,20 @@ export const SafetyGraph: React.FC<SafetyGraphProps> = ({ graphData, projectId, 
   );
 
   return (
-    <div className="w-full h-[560px] bg-slate-950/80 rounded-xl border border-slate-700/60 relative overflow-hidden flex flex-col">
+    <div className="w-full h-[560px] bg-slate-950 rounded-xl border border-slate-800 relative overflow-hidden flex flex-col">
       {/* Dynamic Safety State Header & Recalculation Toolbar */}
       <div className="px-4 py-2.5 bg-slate-900/95 border-b border-slate-800 flex flex-wrap items-center justify-between gap-3 text-xs z-10">
         <div className="flex items-center gap-2">
           <span className="font-semibold text-slate-300 flex items-center gap-1.5">
-            <Activity className="w-3.5 h-3.5 text-cyan-400" />
+            <Activity className="w-3.5 h-3.5 text-teal-400" />
             Dynamic Safety State:
           </span>
           <span
             className={`px-2.5 py-0.5 rounded-full font-bold text-[11px] border flex items-center gap-1 ${
               graphData?.dynamic_safety_state === 'SAFE'
-                ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30'
+                ? 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30'
                 : graphData?.dynamic_safety_state === 'WARNING'
-                ? 'bg-amber-500/20 text-amber-300 border-amber-500/30'
+                ? 'bg-amber-500/15 text-amber-300 border-amber-500/30'
                 : 'bg-rose-500/20 text-rose-300 border-rose-500/30 animate-pulse'
             }`}
           >
@@ -356,42 +514,53 @@ export const SafetyGraph: React.FC<SafetyGraphProps> = ({ graphData, projectId, 
             )}
           </span>
           {graphData?.isolated_rooms && graphData.isolated_rooms.length > 0 && (
-            <span className="px-2 py-0.5 rounded-full font-bold text-[10px] bg-rose-950 text-rose-300 border border-rose-800">
+            <span className="px-2 py-0.5 rounded-full font-semibold text-[10px] bg-rose-950 text-rose-300 border border-rose-800">
               Disconnected: {graphData.isolated_rooms.join(', ')}
             </span>
           )}
         </div>
 
-        {/* Quick Sensor Recalculation Toolbar */}
-        {projectId && (
-          <div className="flex items-center gap-1.5 overflow-x-auto">
-            <span className="text-[10px] text-slate-400 shrink-0 font-medium">Recalculate:</span>
-            <button
-              onClick={handleSimulateCorridorSmoke}
-              disabled={actionLoading}
-              className="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-[11px] text-rose-300 border border-rose-500/30 hover:border-rose-500 flex items-center gap-1 transition-all disabled:opacity-50"
-              title="Simulate 85 ppm smoke alarm in Corridor C"
-            >
-              <Flame className="w-3 h-3 text-rose-400" /> Smoke Corridor C
-            </button>
-            <button
-              onClick={handleSimulateExitBlock}
-              disabled={actionLoading}
-              className="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-[11px] text-amber-300 border border-amber-500/30 hover:border-amber-500 flex items-center gap-1 transition-all disabled:opacity-50"
-              title="Simulate door obstruction on Exit B"
-            >
-              <Ban className="w-3 h-3 text-amber-400" /> Jam Exit B
-            </button>
-            <button
-              onClick={handleResetSensors}
-              disabled={actionLoading}
-              className="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-[11px] text-emerald-300 border border-emerald-500/30 hover:border-emerald-500 flex items-center gap-1 transition-all disabled:opacity-50"
-              title="Reset sensors to normal baseline"
-            >
-              <RotateCcw className="w-3 h-3 text-emerald-400" /> Restore
-            </button>
-          </div>
-        )}
+        {/* Quick Toolbar: Sparse Layout + Sensor Simulation */}
+        <div className="flex items-center gap-1.5 overflow-x-auto">
+          <button
+            onClick={handleAutoSpace}
+            className="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-[11px] text-slate-200 border border-slate-700 hover:border-slate-600 flex items-center gap-1.5 transition-all shadow-sm"
+            title="Rearrange graph into a sparse, expansive non-overlapping architectural layout"
+          >
+            <LayoutGrid className="w-3 h-3 text-sky-400" />
+            <span>Sparse Layout</span>
+          </button>
+
+          {projectId && (
+            <>
+              <span className="text-[10px] text-slate-500 shrink-0 font-medium ml-1">Simulate:</span>
+              <button
+                onClick={handleSimulateCorridorSmoke}
+                disabled={actionLoading}
+                className="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-[11px] text-slate-200 border border-slate-700 hover:border-rose-500/40 flex items-center gap-1 transition-all disabled:opacity-50"
+                title="Simulate 85 ppm smoke alarm in Corridor C"
+              >
+                <Flame className="w-3 h-3 text-rose-400" /> Smoke
+              </button>
+              <button
+                onClick={handleSimulateExitBlock}
+                disabled={actionLoading}
+                className="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-[11px] text-slate-200 border border-slate-700 hover:border-amber-500/40 flex items-center gap-1 transition-all disabled:opacity-50"
+                title="Simulate door obstruction on Exit B"
+              >
+                <Ban className="w-3 h-3 text-amber-400" /> Jam Exit
+              </button>
+              <button
+                onClick={handleResetSensors}
+                disabled={actionLoading}
+                className="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-[11px] text-slate-200 border border-slate-700 hover:border-emerald-500/40 flex items-center gap-1 transition-all disabled:opacity-50"
+                title="Reset sensors to normal baseline"
+              >
+                <RotateCcw className="w-3 h-3 text-emerald-400" /> Restore
+              </button>
+            </>
+          )}
+        </div>
       </div>
 
       <div className="flex-1 relative">
@@ -403,22 +572,24 @@ export const SafetyGraph: React.FC<SafetyGraphProps> = ({ graphData, projectId, 
           onNodeClick={handleNodeClick}
           nodeTypes={nodeTypes}
           fitView
-          fitViewOptions={{ padding: 0.2 }}
-          minZoom={0.2}
+          fitViewOptions={{ padding: 0.25 }}
+          minZoom={0.15}
           maxZoom={1.5}
         >
-          <Background color="#1e293b" gap={20} size={1} />
-          <Controls className="!bg-slate-800 !border-slate-700 !text-white fill-white" />
+          <Background color="#334155" gap={24} size={1} />
+          <Controls className="!bg-slate-900 !border-slate-800 !text-slate-300" />
           <MiniMap
             nodeColor={(node) => {
-              if (node.data?.is_hazard) return '#dc2626';
-              if (node.data?.is_blocked) return '#ef4444';
-              if (node.data?.is_affected) return '#f43f5e';
+              if (node.data?.is_hazard) return '#e11d48';
+              if (node.data?.is_blocked) return '#f43f5e';
+              if (node.data?.is_affected) return '#fb7185';
               if (node.data?.type === 'EXIT') return '#10b981';
-              return '#0284c7';
+              if (node.data?.type === 'CORRIDOR') return '#14b8a6';
+              if (node.data?.type === 'STAIR' || node.data?.type === 'RAMP') return '#f59e0b';
+              return '#475569';
             }}
-            maskColor="rgba(15, 23, 42, 0.7)"
-            className="!bg-slate-900 !border-slate-700"
+            maskColor="rgba(10, 15, 29, 0.75)"
+            className="!bg-slate-900 !border-slate-800"
           />
         </ReactFlow>
       </div>
