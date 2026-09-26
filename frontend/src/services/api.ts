@@ -36,6 +36,12 @@ export const projectApi = {
     return response.data;
   },
 
+  // Ingest KLU Central Library visual survey JSON
+  importKluLibrary: async (): Promise<any> => {
+    const response = await api.post("/projects/import-klu-library");
+    return response.data;
+  },
+
   // Get project by ID
   getProject: async (id: number | string): Promise<Project> => {
     const response = await api.get<Project>(`/projects/${id}`);

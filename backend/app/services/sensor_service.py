@@ -264,6 +264,25 @@ class SensorService:
             .first()
         )
         if not sensor:
+            # Fallback matching by type/name so simulation controls work seamlessly across all facilities
+            norm_sid = sensor_id.lower()
+            if "smoke" in norm_sid or "corr" in norm_sid:
+                sensor = db.query(BuildingSensor).filter(
+                    BuildingSensor.project_id == project_id,
+                    BuildingSensor.sensor_type == "SMOKE"
+                ).first()
+            elif "door" in norm_sid or "exit" in norm_sid:
+                sensor = db.query(BuildingSensor).filter(
+                    BuildingSensor.project_id == project_id,
+                    BuildingSensor.sensor_type == "DOOR_CONTACT"
+                ).first()
+            elif "temp" in norm_sid:
+                sensor = db.query(BuildingSensor).filter(
+                    BuildingSensor.project_id == project_id,
+                    BuildingSensor.sensor_type == "TEMPERATURE"
+                ).first()
+
+        if not sensor:
             return None
 
         sensor.current_value = value

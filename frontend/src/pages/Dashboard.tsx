@@ -37,6 +37,7 @@ export const Dashboard: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [seedingDemo, setSeedingDemo] = useState(false);
   const [launchingSensorLab, setLaunchingSensorLab] = useState(false);
+  const [loadingKlu, setLoadingKlu] = useState(false);
 
   // Live Dashboard Safety Graph State
   const [selectedProjectId, setSelectedProjectId] = useState<number | null>(null);
@@ -70,14 +71,27 @@ export const Dashboard: React.FC = () => {
     }
   }, []);
 
+  const handleLoadKluLibrary = async () => {
+    setLoadingKlu(true);
+    try {
+      const res = await projectApi.importKluLibrary();
+      await fetchProjects(res.project_id);
+    } catch (e) {
+      console.error('Failed to import KLU Central Library', e);
+    } finally {
+      setLoadingKlu(false);
+    }
+  };
+
   const fetchProjects = useCallback(async (preferredId?: number) => {
     setLoading(true);
     try {
       const res = await projectApi.getProjects();
       setData(res);
 
-      // Determine active project for Safety Graph & Sensor Telemetry
-      const targetId = preferredId || selectedProjectId || (res.projects && res.projects.length > 0 ? res.projects[0].id : null);
+      // Prioritize KLU Central Library or preferred project
+      const kluProject = res.projects?.find(p => p.name.toLowerCase().includes('klu central library'));
+      const targetId = preferredId || (kluProject ? kluProject.id : null) || selectedProjectId || (res.projects && res.projects.length > 0 ? res.projects[0].id : null);
       if (targetId) {
         setSelectedProjectId(targetId);
         loadDashboardGraph(targetId);
@@ -95,8 +109,26 @@ export const Dashboard: React.FC = () => {
   }, [selectedProjectId, loadDashboardGraph, loadDashboardSensors]);
 
   useEffect(() => {
-    fetchProjects();
-  }, [fetchProjects]);
+    const initProjects = async () => {
+      try {
+        const res = await projectApi.getProjects();
+        const hasKlu = res.projects?.some(p => p.name.toLowerCase().includes('klu central library'));
+        if (!hasKlu) {
+          try {
+            const kluRes = await projectApi.importKluLibrary();
+            await fetchProjects(kluRes.project_id);
+            return;
+          } catch (e) {
+            console.warn('Auto-import KLU failed on init', e);
+          }
+        }
+        await fetchProjects();
+      } catch (err) {
+        console.error('Failed to init dashboard projects', err);
+      }
+    };
+    initProjects();
+  }, []);
 
   const handleCreateDemo = async () => {
     setSeedingDemo(true);
@@ -249,6 +281,15 @@ export const Dashboard: React.FC = () => {
               </span>
               <Radio className="w-3.5 h-3.5 text-emerald-400" />
               <span>{launchingSensorLab ? 'Opening Lab...' : 'IoT Sensor Lab'}</span>
+            </button>
+            <button
+              onClick={handleLoadKluLibrary}
+              disabled={loadingKlu}
+              className="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-sky-950/40 hover:bg-sky-900/50 text-sky-300 text-xs font-semibold border border-sky-500/30 hover:border-sky-400 transition-all shadow-sm active:scale-[0.98] disabled:opacity-50"
+              title="Ingest KLU Central Library from visual survey JSON with CAD blueprint, safety graph & 16 IoT sensors"
+            >
+              <Building2 className="w-3.5 h-3.5 text-sky-400" />
+              <span>{loadingKlu ? 'Loading Library...' : 'KLU Central Library'}</span>
             </button>
             <Link
               to="/projects/new"
@@ -597,6 +638,14 @@ export const Dashboard: React.FC = () => {
                 </p>
               </div>
               <div className="flex flex-wrap items-center justify-center gap-2.5 pt-2">
+                <button
+                  onClick={handleLoadKluLibrary}
+                  disabled={loadingKlu}
+                  className="px-3.5 py-2 rounded-lg bg-sky-950/40 hover:bg-sky-900/50 text-sky-300 text-xs font-semibold border border-sky-500/30 transition-all flex items-center gap-1.5 disabled:opacity-50"
+                >
+                  <Building2 className="w-3.5 h-3.5 text-sky-400" />
+                  <span>{loadingKlu ? 'Importing Library...' : 'Load KLU Central Library'}</span>
+                </button>
                 <button
                   onClick={handleLaunchSensorWorkspace}
                   disabled={launchingSensorLab}

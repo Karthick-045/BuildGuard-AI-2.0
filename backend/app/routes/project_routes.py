@@ -97,6 +97,17 @@ def create_sample_sensor_workspace(db: Session = Depends(get_db)):
         "graph": graph_data.model_dump()
     }
 
+@router.post("/import-klu-library", status_code=status.HTTP_201_CREATED)
+def import_klu_library_route(db: Session = Depends(get_db)):
+    """
+    Ingests KLU Central Library from visual survey JSON:
+    Generates authentic vector blueprint SVG, safety graph nodes/edges,
+    IoT building safety sensors in corridors & rooms, and life-safety audit findings.
+    """
+    from app.services.klu_library_service import import_klu_library_into_db
+    result = import_klu_library_into_db(db)
+    return result
+
 @router.get("", response_model=ProjectListResponse)
 def get_projects(db: Session = Depends(get_db)):
     """

@@ -22,12 +22,27 @@ from app.routes import (
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("buildguard")
 
-# Initialize database schema tables
+# Initialize database schema tables & ensure KLU Central Library is ingested
 try:
     Base.metadata.create_all(bind=engine)
     logger.info("Database tables initialized successfully.")
+
+    from app.services.klu_library_service import import_klu_library_into_db
+    from app.models.project import Project
+    from app.database import SessionLocal
+    _init_db = SessionLocal()
+    try:
+        _existing = _init_db.query(Project).filter(Project.name == "KLU Central Library").first()
+        if not _existing:
+            logger.info("Auto-seeding KLU Central Library from visual survey JSON...")
+            _res = import_klu_library_into_db(_init_db)
+            logger.info(f"KLU Central Library successfully auto-seeded with ID {_res.get('project_id')}")
+        else:
+            logger.info(f"KLU Central Library is already active with ID {_existing.id}")
+    finally:
+        _init_db.close()
 except Exception as e:
-    logger.error(f"Error creating database tables: {e}")
+    logger.error(f"Error initializing database or KLU Library: {e}", exc_info=True)
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
@@ -36,6 +51,30 @@ app = FastAPI(
     docs_url="/docs",
     redoc_url="/redoc"
 )
+
+@app.on_event("startup")
+def ensure_klu_central_library():
+    """
+    Auto-ingests KLU Central Library from visual survey JSON:
+    Generates blueprint SVG, safety graph, and IoT sensors in corridors and rooms.
+    """
+    from app.database import SessionLocal
+    from app.services.klu_library_service import import_klu_library_into_db
+    from app.models.project import Project
+    
+    db = SessionLocal()
+    try:
+        existing = db.query(Project).filter(Project.name == "KLU Central Library").first()
+        if not existing:
+            logger.info("Auto-importing KLU Central Library into database...")
+            res = import_klu_library_into_db(db)
+            logger.info(f"KLU Central Library ingested successfully: ID {res.get('project_id')}")
+        else:
+            logger.info(f"KLU Central Library is already active with ID {existing.id}")
+    except Exception as e:
+        logger.error(f"Failed to auto-import KLU Central Library: {e}", exc_info=True)
+    finally:
+        db.close()
 
 # Configure CORS
 origins = [
